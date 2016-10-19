@@ -1,0 +1,15 @@
+Package: drinf
+Title: Computes doubly-robust estimators and doubly-robust confidence intervals
+Version: 0.0.0.9000
+Authors@R: person("David", "Benkeser", email = "benkeser@berkeley.edu", role = c("aut", "cre"))
+Description: This package uses targeted minimum loss-based estimation to
+    construct estimators of a time-dependent covariate-adjusted mean that are
+    doubly-robust with resepect to consistency and also with respect to asymptotic
+    linearity. The latter property allows for the construction of doubly-robust
+    confidence intervals
+Depends:
+    R (>= 3.2.0)
+License: MIT
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 5.0.1
