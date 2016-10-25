@@ -4,9 +4,8 @@
 \alias{targetQg}
 \title{targetQg}
 \usage{
-targetQg(A0, A1, L2, Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q2nr.seta, Q1nr, g0nr, g1nr,
-  h0nr, h1nr, hbarnr, abar, tolg, tolQ, return.models, offset.model = TRUE,
-  allatonce = FALSE, ...)
+targetQg(A0, A1, L2, Qn, gn, Qnr.gnr, abar, tolg, tolQ, return.models,
+  offset.model = TRUE, allatonce = FALSE, ...)
 }
 \arguments{
 \item{A0}{A \code{vector} treatment delivered at baseline.}
@@ -14,6 +13,21 @@ targetQg(A0, A1, L2, Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q2nr.seta, Q1nr, g0nr, g1nr,
 \item{A1}{A \code{vector} treatment deliver after \code{L1} is measured.}
 
 \item{L2}{A \code{vector} outcome of interest.}
+
+\item{abar}{A \code{vector} of length 2 indicating the treatment assignment 
+that is of interest.}
+
+\item{tolg}{A \code{numeric} indicating the truncation level for conditional treatment probabilities.}
+
+\item{tolQ}{A \code{numeric}}
+
+\item{return.models}{A \code{boolean} indicating whether the fluctuation model should be 
+returned with the output.}
+
+\item{offset.model}{A \code{boolean} indicating whether to fit a fluctuation model
+with an offset term (if \code{TRUE}) or intercept-only with weights (if \code{FALSE})}
+
+\item{allatonce}{Do all the targeting with a single fit; if \code{FALSE}, then target g, followed by Q}
 
 \item{Q2n}{A \code{vector} of estimates of Q_{2,0}}
 
@@ -39,21 +53,6 @@ targetQg(A0, A1, L2, Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q2nr.seta, Q1nr, g0nr, g1nr,
 
 \item{hbarnr}{A \code{vector} of estimates of h^r, the iterated reduced
 dimension regression.}
-
-\item{abar}{A \code{vector} of length 2 indicating the treatment assignment 
-that is of interest.}
-
-\item{tolg}{A \code{numeric} indicating the truncation level for conditional treatment probabilities.}
-
-\item{tolQ}{A \code{numeric}}
-
-\item{return.models}{A \code{boolean} indicating whether the fluctuation model should be 
-returned with the output.}
-
-\item{offset.model}{A \code{boolean} indicating whether to fit a fluctuation model
-with an offset term (if \code{TRUE}) or intercept-only with weights (if \code{FALSE})}
-
-\item{allatonce}{Do all the targeting with a single fit; if \code{FALSE}, then target g, followed by Q}
 }
 \value{
 A list with named entries corresponding to the estimators of the 

@@ -79,6 +79,7 @@ drinf.tmle <- function(L0, L1, L2,
                        glm.Q=NULL,
                        glm.g=NULL,
                        guard=c("Q","g"),
+                       flucOrd = c("targetQg"), ############### new option testing for flexible fluctuations
                        return.models=FALSE,
                        maxIter=20,
                        tolIF=1/(10*sqrt(length(L2))), 
@@ -138,152 +139,158 @@ drinf.tmle <- function(L0, L1, L2,
     # compute reduced dimension regressions
     #----------------------------------------
     Qnr.gnr <- redReg(A0 = A0, A1 = A1, L2 = L2, abar = abar, 
-                      g0n = gn$g0n, g1n = gn$g1n, Q2n = Qn$Q2n, 
-                      Q1n = Qn$Q1n, verbose = verbose, tolg = tolg, 
+                      gn = gn, Qn = Qn, verbose = verbose, tolg = tolg, 
                       SL.Qr = SL.Qr, SL.gr = SL.gr, return.models = return.models)
-    Qnr <- Qnr.gnr$Qnr
-    gnr <- Qnr.gnr$gnr
     
-    #--------------------
-    # target Q and g
-    #--------------------
+    
+    #----------------------------------------
+    # target Q and g according to flucOrd
+    #----------------------------------------
     # initialize vectors in Qnstar and gnstar that will hold
     # targeted nuisance parameters by setting equal to the initial values
     Qnstar <- vector(mode = "list")
     gnstar <- vector(mode = "list")
-
-    Qnstar$Q2nstar <- Qn$Q2n
-    Qnstar$Q1nstar <- Qn$Q1n
-    gnstar$g1nstar <- gn$g1n
-    gnstar$g0nstar <- gn$g0n
     
-    # run the targeting function
-    etastar <- targetQg(
-        A0 = A0, A1 = A1, L2 = L2, Q2n = Qnstar$Q2nstar, Q1n = Qnstar$Q1nstar, 
-        g1n = gnstar$g1nstar, g0n = gnstar$g0nstar, 
-        Q2nr.seta = Qnr$Q2nr.seta, Q2nr.obsa = Qnr$Q2nr.obsa, 
-        Q1nr = Qnr$Q1nr, g0nr = gnr$g0nr, g1nr = gnr$g1nr, 
-        h0nr = gnr$h0nr, h1nr = gnr$h1nr, 
-        hbarnr = gnr$hbarnr, abar = abar, tolg = tolg, tolQ = tolQ, 
-        return.models = return.models, ...
-    )
-    #--------------------------------------------------------
-    # assign new values of nuisance parameters to Qn and gn
-    #--------------------------------------------------------
-    Qnstar$Q2nstar <- etastar$Q2nstar
-    Qnstar$Q1nstar <- etastar$Q1nstar
-    gnstar$g1nstar <- etastar$g1nstar
-    gnstar$g0nstar <- etastar$g0nstar
+    Qnstar$Q2n <- Qn$Q2n
+    Qnstar$Q1n <- Qn$Q1n
+    gnstar$g1n <- gn$g1n
+    gnstar$g0n <- gn$g0n
+    
+    # flucOrd is a vector of functions to call in sequence to 
+    # perform the targeting.
+    for(ff in flucOrd){
+        if(verbose){
+            cat("Calling ", ff, " for targeting step. \n")
+        }
+        flucOut <- do.call(ff, args = list(
+            A0 = A0, A1 = A1, L2 = L2, Qn = Qnstar, gn = gnstar, Qnr.gnr = Qnr.gnr, 
+            tolg = tolg, tolQ = tolQ, abar = abar, return.models = return.models,
+            ...
+        ))
+        # look for what names are in function output and assign values 
+        # accordingly
+        flucOutNames <- names(flucOut)
+        if("Q2nstar" %in% flucOutNames){
+            if(verbose) cat("Q2n was targeted by ", ff,". \n")
+            Qnstar$Q2n <- flucOut$Q2n
+        }
+        if("Q1nstar" %in% flucOutNames){
+            if(verbose) cat("Q1n was targeted by ", ff,". \n")
+            Qnstar$Q1n <- flucOut$Q1n
+        }
+        if("g1nstar" %in% flucOutNames){
+            if(verbose) cat("g1n was targeted by ", ff,". \n")
+            gnstar$g1n <- flucOut$g1n
+        }
+        if("g0nstar" %in% flucOutNames){
+            if(verbose) cat("g0n was targeted by ", ff,". \n")
+            gnstar$g0n <- flucOut$g0n
+        }
+        # one of these functions could be redReg, to update the reduced
+        # dimension regressions in between targeting steps -- if so, 
+        # replace Qnr.gnr
+        if("Qnr" %in% flucOutNames){
+            Qnr.gnr <- flucOut
+        }
+    } 
     
     #-------------------------
     # evaluate IF
     #-------------------------
     if.dr <- evaluateIF(
         A0 = A0, A1 = A1, L2 = L2, 
-        Q2n = Qnstar$Q2nstar, Q1n = Qnstar$Q1nstar, 
-        g1n = gnstar$g1nstar, g0n = gnstar$g0nstar, 
-        Q2nr.obsa = Qnr$Q2nr.obsa, Q1nr = Qnr$Q1nr, 
-        g0nr = gnr$g0nr, g1nr = gnr$g1nr, 
-        h0nr = gnr$h0nr, h1nr = gnr$h1nr, hbarnr = gnr$hbarnr,
+        Q2n = Qnstar$Q2n, Q1n = Qnstar$Q1n, 
+        g1n = gnstar$g1n, g0n = gnstar$g0n, 
+        Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, Q1nr = Qnr.gnr$Qnr$Q1nr, 
+        g0nr = Qnr.gnr$gnr$g0nr, g1nr = Qnr.gnr$gnr$g1nr, 
+        h0nr = Qnr.gnr$gnr$h0nr, h1nr = Qnr.gnr$gnr$h1nr, hbarnr = Qnr.gnr$gnr$hbarnr,
         abar = abar
     )
     # mean of IF -- first three terms are added, last 5 are subtracted
-    meanif.dr <- t(matrix(c(1,1,1,-1,-1,-1,-1,-1)))%*%
-        colMeans(Reduce("cbind",if.dr))
+    meanif.dr <- c(
+        # original terms
+        t(matrix(c(1,1,1)))%*%colMeans(Reduce("cbind",if.dr[1:3])),
+        # extra terms tageting g's
+        t(matrix(c(1,1)))%*%colMeans(Reduce("cbind",if.dr[4:5])),
+        # extra terms targeting Q's
+        t(matrix(c(1,1,1)))%*%colMeans(Reduce("cbind",if.dr[6:8]))
+    )
     
     #-----------------------------------
     # targeting loop for dr inference
     #-----------------------------------
     iter <- 1
-    while(abs(meanif.dr) > tolIF & iter < maxIter){
-        #---------------------------------------
-        # residual outcomes for Qr regressions
-        #---------------------------------------
-        # write over original values
-        # same call as earlier, but now with Qnstar and gnstar
-        rQ <- residQ(
-            L2 = L2, A0 = A0, A1 = A1, 
-            Q2n = Qnstar$Q2nstar, Q1n = Qnstar$Q1nstar, 
-            g0n = gnstar$g0nstar, g1n = gnstar$g1nstar, abar = abar, ...
-        )
-        
-        #---------------------------
-        # estimate Qr regressions
-        #---------------------------
-        # write over original values
-        # same call as earlier, but now with Qnstar and gnstar
-        Qnr <- estimateQr(
-            rQ1 = rQ$rQ1, rQ2 = rQ$rQ2, 
-            g0n = gnstar$g0nstar, g1n = gnstar$g1nstar, 
-            A0 = A0, A1 = A1, SL.Qr = SL.Qr, abar = abar, 
-            verbose = verbose,return.models = return.models, ...
-        )
-        
-        #---------------------------------------
-        # residual outcomes for gr regressions
-        #---------------------------------------
-        # write over original values
-        # same call as earlier, but now with Qnstar and gnstar
-        rg <- residG(
-            A0 = A0, A1 = A1, g0n = gnstar$g0nstar, g1n = gnstar$g1nstar, abar = abar, ...
-        )
-        
-        #---------------------------
-        # estimate gr regressions
-        #---------------------------
-        # write over original values
-        # same call as earlier, but now with Qnstar and gnstar
-        gnr <- estimategr(
-            rg0 = rg$rg0, rg1 = rg$rg1, g0n = gnstar$g0nstar, 
-            g1n = gnstar$g1nstar, A0 = A0, A1 = A1, 
-            Q2n = Qnstar$Q2nstar,Q1n = Qnstar$Q1nstar, verbose = verbose, 
-            SL.gr = SL.gr, abar = abar, return.models = return.models, 
-            tolg = tolg, ...
-        )
+    while(max(abs(meanif.dr)) > tolIF & iter < maxIter){
+        #-----------------------------------------
+        # compute reduced dimension regressions
+        #----------------------------------------
+        Qnr.gnr <- redReg(A0 = A0, A1 = A1, L2 = L2, abar = abar, 
+                          gn = gn, Qn = Qn, verbose = verbose, tolg = tolg, 
+                          SL.Qr = SL.Qr, SL.gr = SL.gr, return.models = return.models)
         
         #--------------------
         # target Q and g
         #--------------------
-        # run the targeting function
-        etastar <- targetQg(
-            A0 = A0, A1 = A1, L2 = L2, 
-            Q2n = Qnstar$Q2nstar, Q1n = Qnstar$Q1nstar, 
-            g1n = gnstar$g1nstar, g0n = gnstar$g0nstar, 
-            Q2nr.seta = Qnr$Q2nr.seta, Q2nr.obsa = Qnr$Q2nr.obsa, 
-            Q1nr = Qnr$Q1nr, g0nr = gnr$g0nr, g1nr = gnr$g1nr, 
-            h0nr = gnr$h0nr, h1nr = gnr$h1nr, 
-            hbarnr = gnr$hbarnr, abar = abar, tolg = tolg, tolQ = tolQ, 
-            return.models = return.models, ...
-        )
-        #--------------------------------------------------------
-        # assign new values of nuisance parameters to Qn and gn
-        #--------------------------------------------------------
-        Qnstar$Q2nstar <- etastar$Q2nstar
-        Qnstar$Q1nstar <- etastar$Q1nstar
-        gnstar$g1nstar <- etastar$g1nstar
-        gnstar$g0nstar <- etastar$g0nstar
+        for(ff in flucOrd){
+            if(verbose){
+                cat("Calling ", ff, " for targeting step. \n")
+            }
+            flucOut <- do.call(ff, args = list(
+                A0 = A0, A1 = A1, L2 = L2, Qn = Qnstar, gn = gnstar, Qnr.gnr = Qnr.gnr, 
+                tolg = tolg, tolQ = tolQ, abar = abar, return.models = return.models,
+                ...
+            ))
+            # look for what names are in function output and assign values 
+            # accordingly
+            flucOutNames <- names(flucOut)
+            if("Q2nstar" %in% flucOutNames){
+                if(verbose) cat("Q2n was targeted by ", ff,". \n")
+                Qnstar$Q2n <- flucOut$Q2n
+            }
+            if("Q1nstar" %in% flucOutNames){
+                if(verbose) cat("Q1n was targeted by ", ff,". \n")
+                Qnstar$Q1n <- flucOut$Q1n
+            }
+            if("g1nstar" %in% flucOutNames){
+                if(verbose) cat("g1n was targeted by ", ff,". \n")
+                gnstar$g1n <- flucOut$g1n
+            }
+            if("g0nstar" %in% flucOutNames){
+                if(verbose) cat("g0n was targeted by ", ff,". \n")
+                gnstar$g0n <- flucOut$g0n
+            }
+            if("Qnr" %in% flucOutNames){
+                Qnr.gnr <- flucOut
+            }
+        } 
         
         #-------------------------
-        # evaluate IC
+        # evaluate IF
         #-------------------------
-        # write over original values
-        # same call as earlier, but now with Qnstar, gnstar
         if.dr <- evaluateIF(
             A0 = A0, A1 = A1, L2 = L2, 
-            Q2n = Qnstar$Q2nstar, Q1n = Qnstar$Q1nstar, 
-            g1n = gnstar$g1nstar, g0n = gnstar$g0nstar, 
-            Q2nr.obsa = Qnr$Q2nr.obsa, Q1nr = Qnr$Q1nr, 
-            g0nr = gnr$g0nr, g1nr = gnr$g1nr, 
-            h0nr = gnr$g0nr, h1nr = gnr$h1nr, hbarnr = gnr$hbarnr, abar = abar
+            Q2n = Qnstar$Q2n, Q1n = Qnstar$Q1n, 
+            g1n = gnstar$g1n, g0n = gnstar$g0n, 
+            Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, Q1nr = Qnr.gnr$Qnr$Q1nr, 
+            g0nr = Qnr.gnr$gnr$g0nr, g1nr = Qnr.gnr$gnr$g1nr, 
+            h0nr = Qnr.gnr$gnr$h0nr, h1nr = Qnr.gnr$gnr$h1nr, hbarnr = Qnr.gnr$gnr$hbarnr,
+            abar = abar
         )
-        # mean of IC
-        meanif.dr <- t(matrix(c(1,1,1,-1,-1,-1,-1,-1)))%*%
-            colMeans(Reduce("cbind",if.dr))
+        # mean of IF -- first three terms are added, last 5 are subtracted
+        meanif.dr <- c(
+            # original terms
+            t(matrix(c(1,1,1)))%*%colMeans(Reduce("cbind",if.dr[1:3])),
+            # extra terms tageting g's
+            t(matrix(c(1,1)))%*%colMeans(Reduce("cbind",if.dr[4:5])),
+            # extra terms targeting Q's
+            t(matrix(c(1,1,1)))%*%colMeans(Reduce("cbind",if.dr[6:8]))
+        )
+        
         # update iteration
         iter <- iter + 1
-        cat("\n epsilon = ", etastar$flucmod$coefficients[1],
-            "\n mean ic = ", meanif.dr, 
-            "\n")
+        # cat("\n epsilon = ", etastar$flucmod$coefficients[1],
+        #     "\n mean ic = ", meanif.dr, 
+        #     "\n")
     }
     
     cat("out of dr tmle loop")
@@ -291,7 +298,7 @@ drinf.tmle <- function(L0, L1, L2,
     # evaluate parameter and compute std err
     #------------------------------------------
     # evaluate parameter
-    psin <- mean(Qnstar$Q1nstar)
+    psin <- mean(Qnstar$Q1n)
     
     # compute standard errors
     se <- sqrt(mean(Reduce("c",if.dr)^2)/length(A0))

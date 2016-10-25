@@ -38,15 +38,16 @@
 #' \code{return.models = TRUE} output also includes the fitted fluctuation model. 
  
 targetQg <- function(
-    A0, A1, L2, Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q2nr.seta, Q1nr, g0nr, g1nr, h0nr, h1nr, 
-    hbarnr, abar, tolg, tolQ, return.models,offset.model = TRUE, allatonce = FALSE, 
+    A0, A1, L2, Qn, gn, Qnr.gnr, 
+    # Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q2nr.seta, Q1nr, g0nr, g1nr, h0nr, h1nr, hbarnr, 
+    abar, tolg, tolQ, return.models,offset.model = TRUE, allatonce = FALSE, 
     ...
 ){
     #-------------------------------------------
     # making outcomes for logistic fluctuation
     #-------------------------------------------
     # length of output
-    n <- length(g0n)
+    n <- length(gn$g0n)
     
     # scale L2, Q2n, Q1n to be in (0,1)
     L2.min <- min(L2); L2.max <- max(L2)
@@ -54,8 +55,8 @@ targetQg <- function(
     # scale L2
     L2s <- (L2 - L2.min)/(L2.max - L2.min)
     # scale Q2n,Q1n
-    Q2ns <- (Q2n - L2.min)/(L2.max - L2.min)
-    Q1ns <- (Q1n - L2.min)/(L2.max - L2.min)
+    Q2ns <- (Qn$Q2n - L2.min)/(L2.max - L2.min)
+    Q1ns <- (Qn$Q1n - L2.min)/(L2.max - L2.min)
     
     flucOut <- c(A0, A1, Q2ns, L2s)
     
@@ -63,8 +64,8 @@ targetQg <- function(
     # making offsets for logistic fluctuation
     #-------------------------------------------
     flucOff <- c(
-        SuperLearner::trimLogit(g0n, trim = tolg),
-        SuperLearner::trimLogit(g1n, trim = tolg),
+        SuperLearner::trimLogit(gn$g0n, trim = tolg),
+        SuperLearner::trimLogit(gn$g1n, trim = tolg),
         SuperLearner::trimLogit(Q1ns, trim = tolQ),
         SuperLearner::trimLogit(Q2ns, trim = tolQ)
     )
@@ -76,25 +77,25 @@ targetQg <- function(
     flucCov1 <- c(
         rep(0,n), 
         rep(0,n),
-        (L2.max - L2.min) * as.numeric(A0 == abar[1])/g0n, # the usual guy
-        (L2.max - L2.min) * as.numeric(A0==abar[1] & A1==abar[2])/(g0n * g1n) # the usual guy
+        (L2.max - L2.min) * as.numeric(A0 == abar[1])/gn$g0n, # the usual guy
+        (L2.max - L2.min) * as.numeric(A0==abar[1] & A1==abar[2])/(gn$g0n * gn$g1n) # the usual guy
     )
     # the new "clever covariates" for Q
     flucCov2 <- c(
         rep(0, n), # not needed for A0
         rep(0, n), # not needed for A1    
         # the extra term for targeting Q1n
-        (L2.max - L2.min) * as.numeric(A0 == abar[1]) * (h0nr/g0nr),
+        (L2.max - L2.min) * as.numeric(A0 == abar[1]) * (Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr),
         # the sum of the extra two terms for targeting Q2n
         (L2.max - L2.min) * as.numeric(A0==abar[1] & A1==abar[2]) *  
-            ((hbarnr + h1nr)/g1nr)
+            ((Qnr.gnr$gnr$hbarnr + Qnr.gnr$gnr$h1nr)/Qnr.gnr$gnr$g1nr)
     )
     # the new "clever covariates" for g
     flucCov3 <- c(
         # the term for targeting g0n
-        Q1nr / g0n,
+        Qnr.gnr$Qnr$Q1nr / gn$g0n,
         # the term for targeting g1n 
-        Q2nr.obsa / g1n, 
+        Qnr.gnr$Qnr$Q2nr.obsa / gn$g1n, 
         rep(0,n),
         rep(0,n)
     )
@@ -107,19 +108,19 @@ targetQg <- function(
     # \bar{A} = abar
     predCov1 <- c(
         rep(0,n), rep(0,n),
-        (L2.max - L2.min)/g0n, # all A0 == abar[1]
-        (L2.max - L2.min)/(g0n * g1n)  # all c(A0,A1) = abar
+        (L2.max - L2.min)/gn$g0n, # all A0 == abar[1]
+        (L2.max - L2.min)/(gn$g0n * gn$g1n)  # all c(A0,A1) = abar
     )
     
     predCov2 <- c(
         rep(0,n), rep(0,n),
-        (L2.max - L2.min) * h0nr/g0nr, # all A0 == abar[1]
-        (L2.max - L2.min) * (hbarnr + h1nr)/g1nr  # all c(A0,A1) = abar
+        (L2.max - L2.min) * Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr, # all A0 == abar[1]
+        (L2.max - L2.min) * (Qnr.gnr$gnr$hbarnr + Qnr.gnr$gnr$h1nr)/Qnr.gnr$gnr$g1nr  # all c(A0,A1) = abar
     )
     
     predCov3 <- c(
-        Q1nr / g0n, # no need to change this one
-        Q2nr.seta / g1n, # this one is set to Q2nr(abar[1], \bar{L}_1)
+        Qnr.gnr$Qnr$Q1nr / gn$g0n, # no need to change this one
+        Qnr.gnr$Qnr$Q2nr.seta / gn$g1n, # this one is set to Q2nr(abar[1], \bar{L}_1)
         rep(0,n), rep(0,n)
     )
     #-------------------------------------------
