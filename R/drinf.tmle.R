@@ -136,9 +136,13 @@ drinf.tmle <- function(L0, L1, L2,
     
     #-----------------------------------------
     # compute reduced dimension regressions
-    #-----------------------------------------
-    Qrn.grn <- redReg(A0 = A0, A1 = A1, L2 = L2, abar = abar, 
+    #----------------------------------------
+    Qnr.gnr <- redReg(A0 = A0, A1 = A1, L2 = L2, abar = abar, 
+                      g0n = gn$g0n, g1n = gn$g1n, Q2n = Qn$Q2n, 
+                      Q1n = Qn$Q1n, verbose = verbose, tolg = tolg, 
                       SL.Qr = SL.Qr, SL.gr = SL.gr, return.models = return.models)
+    Qnr <- Qnr.gnr$Qnr
+    gnr <- Qnr.gnr$gnr
     
     #--------------------
     # target Q and g
