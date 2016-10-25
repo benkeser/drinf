@@ -4,7 +4,8 @@
 \alias{estimategr}
 \title{estimategr}
 \usage{
-estimategr(rg0, rg1, g0n, g1n, A0, A1, Q2n, Q1n, SL.gr, abar, returnModels, ...)
+estimategr(rg0, rg1, g0n, g1n, A0, A1, Q2n, Q1n, SL.gr, abar, return.models,
+  tolg, verbose, ...)
 }
 \arguments{
 \item{rg0}{The "residual" for the first reduced dimension regression (on Q1n).}
@@ -30,15 +31,23 @@ treatment regressions.  See \code{SuperLearner} package for details.}
 \item{abar}{A \code{vector} of length 2 indicating the treatment assignment 
 that is of interest.}
 
-\item{returnModels}{A \code{boolean} indicating whether the models for Qr0 should be 
+\item{return.models}{A \code{boolean} indicating whether the models for Qr0 should be 
 returned with the output.}
+
+\item{tolg}{A \code{numeric} indicating the truncation level for conditional treatment probabilities.}
 }
 \value{
 A list with elements g0nr, g1nr, h0nr, h1nr, and hbarnr, corresponding to the
 predicted values of the reduced dimension regressions. Also included in output are the
-models used to obtain these predicted values (set to \code{NULL} if \code{returnModels = FALSE})
+models used to obtain these predicted values (set to \code{NULL} if \code{return.models = FALSE})
 }
 \description{
-A function used to estimate the reduced dimension regressions for g
+A function used to estimate the reduced dimension regressions for g. The regression 
+can be computed using a user specified function, passed through \code{SL.gr} or using
+\code{SuperLearner} when \code{length(SL.gr) == 1} or \code{is.list(SL.gr)}. There is 
+an error proofing of the \code{SuperLearner} implementation that deals with situations where
+the \code{NNLS} procedure in the Super Learner ensemble fails and so the function returns 
+zero weights for every coefficient. In this case, the code will default to using the discrete
+Super Learner; that is, the learner with lowest CV-risk.
 }
 

@@ -6,11 +6,11 @@
 \usage{
 drinf.tmle(L0, L1, L2, A0, A1, abar = c(1, 1), stratify = TRUE,
   SL.Q = NULL, SL.g = NULL, SL.Qr = NULL, SL.gr = NULL, glm.Q = NULL,
-  glm.g = NULL, guard = c("Q", "g"), reduction = "univariate",
-  returnModels = FALSE, maxIter = 100, tolEps = 1e-04, tolIC = 1/(10 *
-  sqrt(length(L2))), tolg = 1e-08, verbose = TRUE, Qsteps = 2,
-  SL.Q.options = list(family = gaussian()), SL.g.options = list(family =
-  binomial()), glm.Q.options = list(family = gaussian()), ...)
+  glm.g = NULL, guard = c("Q", "g"), return.models = FALSE,
+  maxIter = 20, tolIF = 1/(10 * sqrt(length(L2))), tolg = 1e-08,
+  tolQ = 1e-08, verbose = TRUE, SL.Q.options = list(family = gaussian()),
+  SL.g.options = list(family = binomial()), glm.Q.options = list(family =
+  gaussian()), return.ltmle = TRUE, return.naive = TRUE, ...)
 }
 \arguments{
 \item{L0}{A \code{data.frame} featuring covariates measured at baseline.}
@@ -56,25 +56,20 @@ formula used to estimate the conditional probability of treatment at each time p
 Only used if \code{SL.g = NULL}.}
 
 \item{guard}{A \code{vector} of \code{characters}, either \code{"Q"}, \code{"g"}, both, or neither (\code{NULL}).
-Indicates whether to guard against misspecification of outcome or treatment regressions or both.}
+Indicates whether to guard against misspecification of outcome or treatment regressions or both. Currently only works
+with \code{c("Q","g")}.}
 
-\item{returnModels}{A \code{boolean} indicating whether the models for Q, g, Qr, and gr should be 
+\item{return.models}{A \code{boolean} indicating whether the models for Q, g, Qr, and gr should be 
 returned with the output.}
 
 \item{maxIter}{A \code{numeric} indicating the maximum number of TMLE iterations before stopping.}
 
-\item{tolEps}{A \code{numeric} stopping criteria for the TMLE updates based on the value of the fluctuation 
-parameter of the parametric submodels.}
-
-\item{tolIC}{A \code{numeric} stopping criteria for the TMLE updates based on the empirical average of the 
+\item{tolIF}{A \code{numeric} stopping criteria for the TMLE updates based on the empirical average of the 
 estimated influence curve.}
 
 \item{tolg}{A \code{numeric} indicating the truncation level for conditional treatment probabilities.}
 
 \item{verbose}{A \code{boolean} indicating whether messages should be printed to indicate progress.}
-
-\item{Qsteps}{A \code{numeric} equal to 1 or 2, indicating whether the fluctuation to solve score equations 
-for submodels with iterated means as outcomes should be performed in a single or multiple steps.}
 
 \item{SL.Q.options}{A \code{list} of additional arguments passed to \code{SuperLearner} for outcome
 regression fits.}
@@ -84,6 +79,11 @@ probability fits.}
 
 \item{glm.Q.options}{A \code{list} of additional arguments passed to \code{glm} for outcome
 regression fits.}
+
+\item{return.ltmle}{A \code{boolean} indicating whether to compute the LTMLE estimate using a similar
+iterative updating scheme.}
+
+\item{return.naive}{A \code{boolean} indicating whether to return the naive plug-in estimate.}
 
 \item{...}{Other arguments (not currently used)}
 }

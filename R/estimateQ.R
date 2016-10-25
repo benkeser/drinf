@@ -20,10 +20,16 @@
 #' Only used if \code{SL.Q = NULL}.
 #' @param SL.Q.options A \code{list} of additional arguments passed to \code{SuperLearner} 
 #' for outcome regression fits.
+#' @param glm.Q.options A \code{list} of additional arguments passed to \code{glm} for the
+#' outcome regression fits. Typically, the \code{family} argument.
+#' @param return.models  A \code{boolean} indicating whether the models for g00 should be 
+#' returned with the output. 
 #' @param ... Other arguments (not currently used).
 #' 
 #' @return Returns a list with \code{Q2n}, \code{Q1n}, and the estimated model objects if
-#' \code{returnModels = TRUE}
+#' \code{return.models = TRUE}
+#' 
+#' @importFrom SuperLearner SuperLearner
 #' 
 #' @export
 #' 
@@ -31,7 +37,9 @@
 
 
 estimateQ <- function(
-    L0, L1, L2, A0, A1, abar, SL.Q, glm.Q, glm.Q.options, ...
+    L0, L1, L2, A0, A1, abar, SL.Q, SL.Q.options, glm.Q, 
+    glm.Q.options, return.models, verbose, stratify, 
+    ...
 ){
     if(is.null(SL.Q) & is.null(glm.Q)){ 
         stop("Specify Super Learner library or GLM formula for g")
@@ -47,7 +55,7 @@ estimateQ <- function(
         #--------
         # Q2n
         #--------
-        Q2mod <- do.call(ifelse(multiAlgos,"SuperLearner",SL.Q),args=c(list(
+        Q2mod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Q),args=c(list(
             Y=eval(parse(text=paste0(
                 ifelse(stratify,
                        "L2[A0==abar[1] & A1==abar[2]]",
@@ -84,7 +92,7 @@ estimateQ <- function(
         #-----------
         # Q1n
         #-----------
-        Q1mod <- do.call(ifelse(multiAlgos,"SuperLearner",SL.Q),args = c(list(
+        Q1mod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Q),args = c(list(
             Y=eval(parse(text=paste0(
                 ifelse(stratify,
                        "Q2n[A0==abar[1],]",
@@ -181,9 +189,9 @@ estimateQ <- function(
     # don't like the output when do.call is used in call
     Q2mod$call <- Q1mod$call <- NULL
     
-    out <- list(Q2n = Q2n, Q1n = g1n, 
+    out <- list(Q2n = Q2n, Q1n = Q1n, 
                 Q2mod = NULL, Q1mod = NULL)
-    if(returnModels){
+    if(return.models){
         out$Q2mod <- Q2mod
         out$Q1mod <- Q1mod
     }

@@ -3,3 +3,5 @@
 export(drinf.tmle)
 export(estimateG)
 export(estimateQ)
+importFrom(SuperLearner,SuperLearner)
+importFrom(SuperLearner,trimLogit)

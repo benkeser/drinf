@@ -4,7 +4,8 @@
 \alias{estimateG}
 \title{estimateG}
 \usage{
-estimateG(L0, L1, A0, A1, abar, SL.g, glm.g, stratify, SL.g.options, ...)
+estimateG(L0, L1, A0, A1, abar, SL.g, glm.g, stratify, return.models,
+  SL.g.options, verbose, tolg, ...)
 }
 \arguments{
 \item{L0}{A \code{data.frame} featuring covariates measured at baseline.}
@@ -30,14 +31,19 @@ Only used if \code{SL.g = NULL}.}
 \item{stratify}{A \code{boolean} indicating whether to pool across treatment
 nodes or to estimate outcome regression separately in each category.}
 
+\item{return.models}{A \code{boolean} indicating whether the models for g00 should be 
+returned with the output.}
+
 \item{SL.g.options}{A \code{list} of additional arguments passed to \code{SuperLearner} for condtional treatment 
 probability fits.}
+
+\item{tolg}{A \code{numeric} indicating the truncation level for conditional treatment probabilities.}
 
 \item{...}{Other arguments (currently passed to \code{SuperLearner}).}
 }
 \value{
 Returns a list with \code{g0n}, \code{g1n}, and the estimated model objects if
-\code{returnModels = TRUE}
+\code{return.models = TRUE}
 }
 \description{
 This function computes the conditional treatment probabilities at both timepoints.

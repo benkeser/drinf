@@ -1,6 +1,12 @@
 #' estimategr
 #' 
-#' A function used to estimate the reduced dimension regressions for g
+#' A function used to estimate the reduced dimension regressions for g. The regression 
+#' can be computed using a user specified function, passed through \code{SL.gr} or using
+#' \code{SuperLearner} when \code{length(SL.gr) == 1} or \code{is.list(SL.gr)}. There is 
+#' an error proofing of the \code{SuperLearner} implementation that deals with situations where
+#' the \code{NNLS} procedure in the Super Learner ensemble fails and so the function returns 
+#' zero weights for every coefficient. In this case, the code will default to using the discrete
+#' Super Learner; that is, the learner with lowest CV-risk. 
 #' 
 #' @param rg0 The "residual" for the first reduced dimension regression (on Q1n).
 #' @param rg1 The "residual" for the second reduced dimension regression (on Q2n).
@@ -15,12 +21,15 @@
 #' treatment regressions.  See \code{SuperLearner} package for details.
 #' @param abar A \code{vector} of length 2 indicating the treatment assignment 
 #' that is of interest.
-#' @param returnModels  A \code{boolean} indicating whether the models for Qr0 should be 
+#' @param tolg A \code{numeric} indicating the truncation level for conditional treatment probabilities. 
+#' @param return.models  A \code{boolean} indicating whether the models for Qr0 should be 
 #' returned with the output. 
 #'  
+#' @importFrom SuperLearner SuperLearner
+
 #' @return A list with elements g0nr, g1nr, h0nr, h1nr, and hbarnr, corresponding to the
 #' predicted values of the reduced dimension regressions. Also included in output are the
-#' models used to obtain these predicted values (set to \code{NULL} if \code{returnModels = FALSE})
+#' models used to obtain these predicted values (set to \code{NULL} if \code{return.models = FALSE})
 
 
 # TO DO : All this code for one dimensional regressions
@@ -28,14 +37,14 @@
 # the outcome variable and the regressor and return SL predictions. 
 
 estimategr <- function(
-    rg0, rg1, g0n, g1n, A0, A1, Q2n, Q1n, SL.gr, abar, returnModels, ...
+    rg0, rg1, g0n, g1n, A0, A1, Q2n, Q1n, SL.gr, abar, return.models, tolg, verbose, ...
 ){
     multiAlgos <- (length(SL.gr) > 1 | is.list(SL.gr))
     #-------------
     # g0nr 
     # A0 ~ Q1n 
     #-------------
-    g0rmod <- do.call(ifelse(multiAlgos,"SuperLearner",SL.gr),args=list(
+    g0rmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.gr),args=list(
         Y=as.numeric(A0==abar[1]),  
         X=data.frame(Q1n = Q1n),
         SL.library=SL.gr,
@@ -43,17 +52,24 @@ estimategr <- function(
         family = binomial(),
         verbose=verbose))
     if(multiAlgos){
-        # Super Learner predictions 
-        g0nr <- g0rmod$SL.predict
+        weightfail <- all(g0rmod$coef==0)
+        if(!weightfail){
+            # Super Learner predictions 
+            g0nr <- g0rmod$SL.predict
+        }else{
+            dslcol <- which(g0rmod$cvRisk == min(g0rmod$cvRisk, na.rm = TRUE))
+            g0nr <- g0rmod$library.predict[,dslcol]
+        }
     }else{
         g0nr <- g0rmod$pred
     }
+    g0nr[g0nr < tolg] <- tolg
 
     #----------------
     # g1nr
     # A0*A1 ~ Q2n
     #----------------
-    g1rmod <- do.call(ifelse(multiAlgos,"SuperLearner",SL.gr),args=list(
+    g1rmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.gr),args=list(
         Y=as.numeric(A0==abar[1] & A1==abar[2]), 
         X=data.frame(Q2n = Q2n),
         SL.library=SL.gr,
@@ -61,17 +77,25 @@ estimategr <- function(
         family = binomial(),
         verbose=verbose))
     if(multiAlgos){
-        # Super Learner predictions 
-        g1nr <- g1rmod$SL.predict
+        weightfail <- all(g1rmod$coef==0)
+        if(!weightfail){
+            # Super Learner predictions 
+            g1nr <- g1rmod$SL.predict
+        }else{
+            dslcol <- which(g1rmod$cvRisk == min(g1rmod$cvRisk, na.rm = TRUE))
+            g1nr <- g1rmod$library.predict[,dslcol]
+        }
     }else{
         g1nr <- g1rmod$pred
     }
+    # trim small values
+    g1nr[g1nr < tolg] <- tolg
     
     #-------------------------------
     # h0nr
     # rg0 [= (A0 - g0n)/g0n] ~ Q1n
     #-------------------------------
-    h0rmod <- do.call(ifelse(multiAlgos,"SuperLearner",SL.gr),args=list(
+    h0rmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.gr),args=list(
         Y=rg0,
         X=data.frame(Q1n = Q1n),
         SL.library=SL.gr,
@@ -79,8 +103,14 @@ estimategr <- function(
         family = gaussian(),
         verbose=verbose))
     if(multiAlgos){
-        # Super Learner predictions 
-        h0nr<- h0rmod$SL.predict
+        weightfail <- all(h0rmod$coef==0)
+        if(!weightfail){
+            # Super Learner predictions 
+            h0nr<- h0rmod$SL.predict
+        }else{
+            dslcol <- which(h0rmod$cvRisk == min(h0rmod$cvRisk, na.rm = TRUE))
+            h0nr <- h0rmod$library.predict[,dslcol]
+        }
     }else{
         h0nr <- h0rmod$pred
     }
@@ -89,7 +119,7 @@ estimategr <- function(
     # h1rn
     # rg1 [= A0/g0n * (A1 - g1n)/g1n] ~ Q2n
     #---------------------------------------
-    h1rmod <- do.call(ifelse(multiAlgos,"SuperLearner",SL.gr),args=list(
+    h1rmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.gr),args=list(
         Y=rg1,
         X=data.frame(Q2n = Q2n),
         SL.library=SL.gr,
@@ -97,8 +127,14 @@ estimategr <- function(
         family = gaussian(),
         verbose=verbose))
     if(multiAlgos){
-        # Super Learner predictions 
-        h1nr <- h1rmod$SL.predict
+        weightfail <- all(h1rmod$coef==0)
+        if(!weightfail){
+            # Super Learner predictions 
+            h1nr <- h1rmod$SL.predict
+        }else{
+            dslcol <- which(h1rmod$cvRisk == min(h1rmod$cvRisk, na.rm = TRUE))
+            h1nr <- h1rmod$library.predict[,dslcol]
+        }
     }else{
         h1nr <- h1rmod$pred
     }
@@ -107,7 +143,7 @@ estimategr <- function(
     # hbarnr
     # A0/g0nr * h0nr ~ Q2n 
     #--------------------------------------
-    hbarrmod <- do.call(ifelse(multiAlgos,"SuperLearner",SL.gr),args=list(
+    hbarrmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.gr),args=list(
         Y=A0/g0nr * h0nr,
         X=data.frame(Q2n = Q2n),
         SL.library=SL.gr,
@@ -115,8 +151,14 @@ estimategr <- function(
         family = gaussian(),
         verbose=verbose))
     if(multiAlgos){
-        # Super Learner predictions 
-        hbarnr <- hbarrmod$SL.predict
+        weightfail <- all(hbarrmod$coef==0)
+        if(!weightfail){
+            # Super Learner predictions 
+            hbarnr <- hbarrmod$SL.predict
+        }else{
+            dslcol <- which(hbarrmod$cvRisk == min(hbarrmod$cvRisk, na.rm = TRUE))
+            hbarnr <- hbarrmod$library.predict[,dslcol]
+        }
     }else{
         hbarnr <- hbarrmod$pred
     }
@@ -128,12 +170,12 @@ estimategr <- function(
                 hbarnr = hbarnr, g0rmod = NULL, g1rmod = NULL, h0rmod = NULL, 
                 h1rmod = NULL, hbarrmod = NULL) 
     
-    if(returnModels){
+    if(return.models){
         out$g0rmod <- g0rmod
         out$g1rmod <- g1rmod
         out$h0rmod <- h0rmod
         out$h1rmod <- h1rmod
-        hbarrmod <- hbarrmod
+        out$hbarrmod <- hbarrmod
     }
     
     return(out)

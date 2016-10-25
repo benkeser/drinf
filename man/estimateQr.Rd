@@ -4,7 +4,7 @@
 \alias{estimateQr}
 \title{estimateQr}
 \usage{
-estimateQr(rQ1, rQ2, g0n, g1n, A0, A1, SL.Qr, abar, returnModels, ...)
+estimateQr(rQ1, rQ2, g0n, g1n, A0, A1, SL.Qr, abar, return.models, verbose, ...)
 }
 \arguments{
 \item{rQ1}{The "residual" for the first reduced dimension regression (on g0n), 
@@ -28,15 +28,24 @@ outcome regressions.  See \code{SuperLearner} package for details.}
 \item{abar}{A \code{vector} of length 2 indicating the treatment assignment 
 that is of interest.}
 
-\item{returnModels}{A \code{boolean} indicating whether the models for Qr0 should be 
+\item{return.models}{A \code{boolean} indicating whether the models for Qr0 should be 
 returned with the output.}
+
+\item{verbose}{A \code{boolean} indicating whether messages should be printed to indicate progress.}
 }
 \value{
-A list with elements Q2nr, Q1nr, Q2mod, and Q1mod, corresponding to the
-predicted values of the reduced dimension regressions and the models used to fit
-them, respectively.
+A list with elements Q2nr.obsa, Q2rn.seta, Q1nr, Q2mod, 
+and Q1mod. Q2nr.obsa corresponds to the predicted value of the reduced dimension
+regression where A0 is its observed value, while Q2nr.seta is the reduced dimension 
+regression where A0 is set to abar[1].
 }
 \description{
-A function used to estimate the reduced dimension regressions for Q
+A function used to estimate the reduced dimension regressions for Q. The regression 
+can be computed using a user specified function, passed through \code{SL.Qr} or using
+\code{SuperLearner} when \code{length(SL.Qr) == 1} or \code{is.list(SL.Qr)}. There is 
+an error proofing of the \code{SuperLearner} implementation that deals with situations where
+the \code{NNLS} procedure in the Super Learner ensemble fails and so the function returns 
+zero weights for every coefficient. In this case, the code will default to using the discrete
+Super Learner; that is, the learner with lowest CV-risk.
 }
 

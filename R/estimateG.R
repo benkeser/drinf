@@ -19,18 +19,23 @@
 #' Only used if \code{SL.g = NULL}.
 #' @param SL.g.options A \code{list} of additional arguments passed to \code{SuperLearner} for condtional treatment 
 #' probability fits.
+#' @param return.models  A \code{boolean} indicating whether the models for g00 should be 
+#' returned with the output. 
+#' @param tolg A \code{numeric} indicating the truncation level for conditional treatment probabilities. 
 #' @param ... Other arguments (currently passed to \code{SuperLearner}).
 #' 
 #' @return Returns a list with \code{g0n}, \code{g1n}, and the estimated model objects if
-#' \code{returnModels = TRUE}
+#' \code{return.models = TRUE}
 #' 
+#' @importFrom SuperLearner SuperLearner
 #' @export
 #' 
 #' @examples TO DO : add examples
 
 
 estimateG <- function(
-    L0, L1, A0, A1, abar, SL.g, glm.g, stratify, SL.g.options, ...
+    L0, L1, A0, A1, abar, SL.g, glm.g, stratify, 
+    return.models, SL.g.options, verbose, tolg, ...
 ){
     if(is.null(SL.g) & is.null(glm.g)){ 
         stop("Specify Super Learner library or GLM formula for g")
@@ -46,7 +51,8 @@ estimateG <- function(
         #--------
         # g0n
         #--------
-        g0mod <- do.call(ifelse(multiAlgos,"SuperLearner",SL.g),args = c(list(
+        g0mod <- do.call(
+            ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.g),args = c(list(
             Y=as.numeric(A0==abar[1]), X=L0, 
             SL.library=SL.g, obsWeights = rep(1, length(A0)),
             verbose=verbose), SL.g.options
@@ -63,7 +69,7 @@ estimateG <- function(
         #-----------
         # g1n            
         #-----------
-        g1mod <- do.call(ifelse(multiAlgos,"SuperLearner",SL.g),args = c(list(
+        g1mod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.g),args = c(list(
             Y=eval(parse(text=paste0(
                 ifelse(stratify,
                    "as.numeric(A1[A0==abar[1]] == abar[2])",
@@ -133,7 +139,7 @@ estimateG <- function(
     
     out <- list(g0n = g0n, g1n = g1n, 
                 g0mod = NULL, g1mod = NULL)
-    if(returnModels){
+    if(return.models){
         out$g0mod <- g0mod
         out$g1mod <- g1mod
     }
