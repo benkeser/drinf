@@ -6,12 +6,12 @@
 \usage{
 drinf.tmle(L0, L1, L2, A0, A1, abar = c(1, 1), stratify = TRUE,
   SL.Q = NULL, SL.g = NULL, SL.Qr = NULL, SL.gr = NULL, glm.Q = NULL,
-  glm.g = NULL, guard = c("Q", "g"), flucOrd = c("targetQg"),
-  return.models = FALSE, maxIter = 20, tolIF = 1/(10 * sqrt(length(L2))),
-  tolg = 1e-08, tolQ = 1e-08, verbose = TRUE, SL.Q.options = list(family
-  = gaussian()), SL.g.options = list(family = binomial()),
-  glm.Q.options = list(family = gaussian()), return.ltmle = TRUE,
-  return.naive = TRUE, ...)
+  glm.g = NULL, guard = c("Q", "g"), flucOrd = c("targetQ2", "targetQ1",
+  "targetg1", "targetg0"), return.models = FALSE, maxIter = 20,
+  tolIF = 1/(10 * sqrt(length(L2))), tolg = 1e-08, tolQ = 1e-08,
+  verbose = TRUE, SL.Q.options = list(family = gaussian()),
+  SL.g.options = list(family = binomial()), glm.Q.options = list(family =
+  gaussian()), return.ltmle = TRUE, return.naive = TRUE, ...)
 }
 \arguments{
 \item{L0}{A \code{data.frame} featuring covariates measured at baseline.}

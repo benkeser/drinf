@@ -79,7 +79,7 @@ drinf.tmle <- function(L0, L1, L2,
                        glm.Q=NULL,
                        glm.g=NULL,
                        guard=c("Q","g"),
-                       flucOrd = c("targetQg"), ############### new option testing for flexible fluctuations
+                       flucOrd = c("targetQ2","targetQ1","targetg1","targetg0"), ############### new option testing for flexible fluctuations
                        return.models=FALSE,
                        maxIter=20,
                        tolIF=1/(10*sqrt(length(L2))), 
@@ -92,27 +92,6 @@ drinf.tmle <- function(L0, L1, L2,
                        return.ltmle = TRUE,
                        return.naive = TRUE,
                       ...){
-    
-    #-------------------------------------#
-    # Workflow 
-    #-------------------------------------#
-    # ++ Estimate g
-    # ++ Estimate Q
-    # ++ Compute outcomes of Qr regressions
-    # ++ Estimate Qr regressions
-    # ++ Estimate gr regression
-    # ++ - internally, compute outcome(s) of iterated gr regressions
-    # ++ Evaluate IC
-    # while Pn D* < tolIF {
-    #    ++ Target Q, g
-    #    ++ Compute outcomes of Qr regressions
-    #    ++ Estimate Qr
-    #    ++ Estimate gr regression
-    #    ++    - internally, compute outcomes of iterated gr regressions
-    #    ++ Evaluate IC
-    # }
-    # ++ Evaluate parameter
-    # ++ Evaluate standard error
     
     #---------------------
     # estimate g
@@ -134,14 +113,12 @@ drinf.tmle <- function(L0, L1, L2,
         stratify = stratify, ...
     )
     
-    
     #-----------------------------------------
     # compute reduced dimension regressions
     #----------------------------------------
     Qnr.gnr <- redReg(A0 = A0, A1 = A1, L2 = L2, abar = abar, 
                       gn = gn, Qn = Qn, verbose = verbose, tolg = tolg, 
                       SL.Qr = SL.Qr, SL.gr = SL.gr, return.models = return.models)
-    
     
     #----------------------------------------
     # target Q and g according to flucOrd
@@ -165,26 +142,26 @@ drinf.tmle <- function(L0, L1, L2,
         flucOut <- do.call(ff, args = list(
             A0 = A0, A1 = A1, L2 = L2, Qn = Qnstar, gn = gnstar, Qnr.gnr = Qnr.gnr, 
             tolg = tolg, tolQ = tolQ, abar = abar, return.models = return.models,
-            ...
+            SL.Qr = SL.Qr, SL.gr = SL.gr, verbose = verbose, ...
         ))
         # look for what names are in function output and assign values 
         # accordingly
         flucOutNames <- names(flucOut)
         if("Q2nstar" %in% flucOutNames){
             if(verbose) cat("Q2n was targeted by ", ff,". \n")
-            Qnstar$Q2n <- flucOut$Q2n
+            Qnstar$Q2n <- flucOut$Q2nstar
         }
         if("Q1nstar" %in% flucOutNames){
             if(verbose) cat("Q1n was targeted by ", ff,". \n")
-            Qnstar$Q1n <- flucOut$Q1n
+            Qnstar$Q1n <- flucOut$Q1nstar
         }
         if("g1nstar" %in% flucOutNames){
             if(verbose) cat("g1n was targeted by ", ff,". \n")
-            gnstar$g1n <- flucOut$g1n
+            gnstar$g1n <- flucOut$g1nstar
         }
         if("g0nstar" %in% flucOutNames){
             if(verbose) cat("g0n was targeted by ", ff,". \n")
-            gnstar$g0n <- flucOut$g0n
+            gnstar$g0n <- flucOut$g0nstar
         }
         # one of these functions could be redReg, to update the reduced
         # dimension regressions in between targeting steps -- if so, 
@@ -238,26 +215,26 @@ drinf.tmle <- function(L0, L1, L2,
             flucOut <- do.call(ff, args = list(
                 A0 = A0, A1 = A1, L2 = L2, Qn = Qnstar, gn = gnstar, Qnr.gnr = Qnr.gnr, 
                 tolg = tolg, tolQ = tolQ, abar = abar, return.models = return.models,
-                ...
+                SL.Qr = SL.Qr, SL.gr = SL.gr,verbose = verbose, ...
             ))
             # look for what names are in function output and assign values 
             # accordingly
             flucOutNames <- names(flucOut)
             if("Q2nstar" %in% flucOutNames){
                 if(verbose) cat("Q2n was targeted by ", ff,". \n")
-                Qnstar$Q2n <- flucOut$Q2n
+                Qnstar$Q2n <- flucOut$Q2nstar
             }
             if("Q1nstar" %in% flucOutNames){
                 if(verbose) cat("Q1n was targeted by ", ff,". \n")
-                Qnstar$Q1n <- flucOut$Q1n
+                Qnstar$Q1n <- flucOut$Q1nstar
             }
             if("g1nstar" %in% flucOutNames){
                 if(verbose) cat("g1n was targeted by ", ff,". \n")
-                gnstar$g1n <- flucOut$g1n
+                gnstar$g1n <- flucOut$g1nstar
             }
             if("g0nstar" %in% flucOutNames){
                 if(verbose) cat("g0n was targeted by ", ff,". \n")
-                gnstar$g0n <- flucOut$g0n
+                gnstar$g0n <- flucOut$g0nstar
             }
             if("Qnr" %in% flucOutNames){
                 Qnr.gnr <- flucOut
@@ -288,12 +265,12 @@ drinf.tmle <- function(L0, L1, L2,
         
         # update iteration
         iter <- iter + 1
-        # cat("\n epsilon = ", etastar$flucmod$coefficients[1],
-        #     "\n mean ic = ", meanif.dr, 
-        #     "\n")
+        cat(#"\n epsilon = ", etastar$flucmod$coefficients[1],
+            "\n mean ic = ", meanif.dr, 
+             "\n")
     }
     
-    cat("out of dr tmle loop")
+    # cat("out of dr tmle loop")
     #------------------------------------------
     # evaluate parameter and compute std err
     #------------------------------------------
@@ -301,8 +278,12 @@ drinf.tmle <- function(L0, L1, L2,
     psin <- mean(Qnstar$Q1n)
     
     # compute standard errors
-    se <- sqrt(mean(Reduce("c",if.dr)^2)/length(A0))
-    
+    se <- sqrt(mean(
+        (if.dr$Dstar0 + if.dr$Dstar1 + if.dr$Dstar2 -
+            if.dr$Dg1.Q2 - if.dr$Dg0.Q1 - if.dr$DQ2.g1 - 
+            if.dr$DQ2.g0 - if.dr$DQ1.g0)^2
+    )/length(A0))
+
     #-----------------------------------
     # Computing the regular LTMLE
     #-----------------------------------
@@ -408,14 +389,14 @@ drinf.tmle <- function(L0, L1, L2,
         out$Qmod$Q1n <- Qn$Q1nmod
         out$gmod$g0n <- gn$g0nmod
         out$gmod$g1n <- gn$g1nmod
-        out$Qrmod$Q2nr <- Qnr$Q2nrmod
-        out$Qrmod$Q1nr <- Qnr$Q1nrmod
-        out$grmod$g1nr <- gnr$g1nrmod
-        out$grmod$g0nr <- gnr$g0nrmod
-        out$grmod$h0nr <- gnr$h0nrmod
-        out$grmod$h1nr <- gnr$h1nrmod
-        out$grmod$hbarnr <- gnr$hbarnrmod
-        out$flucmod <- etastar$flucmod
+        out$Qrmod$Q2nr <- Qnr.gnr$Q2nrmod
+        out$Qrmod$Q1nr <- Qnr.gnr$Q1nrmod
+        out$grmod$g1nr <- Qnr.gnr$g1nrmod
+        out$grmod$g0nr <- Qnr.gnr$g0nrmod
+        out$grmod$h0nr <- Qnr.gnr$h0nrmod
+        out$grmod$h1nr <- Qnr.gnr$h1nrmod
+        out$grmod$hbarnr <- Qnr.gnr$hbarnrmod
+        # out$flucmod <- etastar$flucmod
         if(return.ltmle){
             out$flucmod.ltmle <- etastar.ltmle$flucmod
         }

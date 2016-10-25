@@ -10,14 +10,18 @@ setwd("~/Dropbox/")
 document("drinf")
 build("drinf")
 library(drinf)
-debug(targetQg)
-debug(drinf.tmle)
+# debug(targetQg)
+# debug(drinf.tmle)
+# debug(targetg0); debug(targetg1)
 test <- drinf.tmle(
     L0 = L0, L1 = L1, L2 = L2, A0 = A0, A1 = A1, 
     abar = c(1,1), SL.Q = c("SL.glm","SL.mean","SL.gam"),
     SL.g = c("SL.glm","SL.mean","SL.gam"), 
     SL.Qr = c("SL.glm","SL.mean","SL.gam"),
     SL.gr = c("SL.glm","SL.mean","SL.gam"),
+    #flucOrd = c("targetg0","targetg1","targetQ2","targetQ1"),
+    flucOrd = c("targetg0","redReg","targetg1","redReg",
+                "targetQ2","redReg","targetQ1"),
     return.models = TRUE, 
     verbose = FALSE,
     maxIter = 100,
