@@ -1,7 +1,7 @@
 L0 <- data.frame(x.0 = rnorm(100))
 A0 <- rbinom(100, 1, plogis(L0$x.0))
 L1 <- data.frame(x.1 = rnorm(100, L0$x.0 + A0))
-A1 <- rbinom(100, 1, plogis(L0$x.0 - A0 + L1$x.1))
+A1 <- rbinom(100, 1, plogis(L0$x.0 + L1$x.1))
 L2 <- rnorm(100, L0$x.0 + A0 + A1 + L1$x.1)
 
 library(roxygen2)
