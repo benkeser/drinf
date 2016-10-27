@@ -70,11 +70,11 @@ targetQg.ltmle <- function(
     #-------------------------------------------
     # fitting fluctuation submodel
     #-------------------------------------------
-    flucmod <- glm(
+    flucmod <- suppressWarnings(glm(
         formula = "out ~ -1 + offset(fo) + fc",
         data = data.frame(out = flucOut, fo = flucOff, fc = flucCov),
         family = binomial()
-    )
+    ))
     
     #--------------------------------------------
     # get predictions back using predCov
