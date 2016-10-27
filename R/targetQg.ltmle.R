@@ -71,8 +71,9 @@ targetQg.ltmle <- function(
     # fitting fluctuation submodel
     #-------------------------------------------
     flucmod <- suppressWarnings(glm(
-        formula = "out ~ -1 + offset(fo) + fc",
+        formula = "out ~ offset(fo)",
         data = data.frame(out = flucOut, fo = flucOff, fc = flucCov),
+        weights = fc,
         family = binomial()
     ))
     
