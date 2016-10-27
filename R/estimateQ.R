@@ -113,6 +113,7 @@ estimateQ <- function(
                 )
             ))),
             SL.library=SL.Q,
+            obsWeights = rep(1, ifelse(stratify, length(Q2n[A0==abar[1]]),length(Q2n))),
             verbose=verbose), SL.Q.options
         ))
         if(multiAlgos){
