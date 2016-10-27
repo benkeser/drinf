@@ -75,6 +75,7 @@ estimateQ <- function(
                 )
             ))),
             SL.library=SL.Q,
+            obsWeights = rep(1, ifelse(stratify, length(L2[A0==abar[1] & A1==abar[2]]),length(L2))),
             verbose=verbose), SL.Q.options
         ))
         
