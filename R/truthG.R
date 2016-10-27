@@ -15,6 +15,7 @@
 #' @param b0 The intercept
 #' @param r The exponent of the rate at which error goes to zero as function of n.
 #' 
+#' @export 
 #' @return A \code{list} with predictions equal to truth + error
 
 truthG <- function(

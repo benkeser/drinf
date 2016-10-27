@@ -23,6 +23,8 @@
 #' to see how it is used. 
 #' @param r The exponent of the rate at which error goes to zero as function of n.
 #' 
+#' @export
+#' 
 #' @return A \code{list} with L0, A0, L1, A1, L2 to input into \code{drinf.tmle}.
 
 makeData <- function(n, b = 0.25, b0 = 1, ba = -0.25, setA = NULL){

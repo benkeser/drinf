@@ -3,5 +3,8 @@
 export(drinf.tmle)
 export(estimateG)
 export(estimateQ)
+export(makeData)
+export(truthG)
+export(truthQ)
 importFrom(SuperLearner,SuperLearner)
 importFrom(SuperLearner,trimLogit)
