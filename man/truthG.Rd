@@ -4,7 +4,7 @@
 \alias{truthG}
 \title{truthG}
 \usage{
-truthG(Y, X, newX, family, obsWeights, b = 1, b0 = 1, r = -1/4, ...)
+truthG(Y, X, newX, family, obsWeights, b = 0.25, b0 = 1, r = -1/4, ...)
 }
 \arguments{
 \item{Y}{The outcome}

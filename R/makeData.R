@@ -32,7 +32,7 @@ makeData <- function(n, b = 0.25, b0 = 1, ba = -0.25, setA = NULL){
     L0.2 <- rbinom(n, 1, 0.5)
     
     if(all(is.null(setA))){
-        A0 <- rbinom(n, 1, plogis(b0 + b*L0.1 - 2*b*L0.2*L0.1))
+        A0 <- rbinom(n, 1, plogis(2*b0 + b*L0.1 - 2*b*L0.2*L0.1))
     }else{
         A0 <- rep(setA[1],n)
     }

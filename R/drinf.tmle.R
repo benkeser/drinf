@@ -288,59 +288,37 @@ drinf.tmle <- function(L0, L1, L2,
     # Computing the regular LTMLE
     #-----------------------------------
     if(return.ltmle){
-        # initialize vectors in Qnstar and gnstar that will hold
-        # targeted nuisance parameters by setting equal to the initial values
-        Qnstar.ltmle <- vector(mode = "list")
-        gnstar.ltmle <- vector(mode = "list")
+        Q2nstar.ltmle <- targetQ2.ltmle(
+            A0 = A0, A1 = A1, L2 = L2, Qn = Qn, gn = gn, 
+            abar = abar, tolg = tolg, tolQ = tolQ, return.models = return.models
+        )$Q2nstar
         
-        Qnstar.ltmle$Q2nstar <- Qn$Q2n
-        Qnstar.ltmle$Q1nstar <- Qn$Q1n
-        gnstar.ltmle$g1nstar <- gn$g1n
-        gnstar.ltmle$g0nstar <- gn$g0n
+        Q1n <- estimateQ1.ltmle(
+            L2 = L2, L0 = L0, Q2n = Q2nstar.ltmle, A0 = A0, A1 = A1, 
+            abar = abar, SL.Q = SL.Q, SL.Q.options = SL.Q.options, 
+            glm.Q = glm.Q, glm.Q.options = glm.Q.options, 
+            return.models = return.models, verbose = verbose, stratify = stratify
+        )$Q1n
         
-        iter.ltmle <- 1
-        meanif.ltmle <- Inf
-        while((abs(meanif.ltmle) > tolIF & iter.ltmle < maxIter) | iter.ltmle == 1){
-            #--------------------
-            # fluctuate Q and g
-            #--------------------
-            etastar.ltmle <- targetQg.ltmle(
-                A0 = A0, A1 = A1, L2 = L2, 
-                Q2n = Qnstar.ltmle$Q2nstar, Q1n = Qnstar.ltmle$Q1nstar, 
-                g1n = gnstar.ltmle$g1nstar, g0n = gnstar.ltmle$g0nstar, abar = abar, tolQ = tolQ, 
-                return.models = return.models, ...
-            )
-            #--------------------------------------------------------
-            # assign new values of nuisance parameters to Qn and gn
-            #--------------------------------------------------------
-            Qnstar.ltmle$Q2nstar <- etastar.ltmle$Q2nstar
-            Qnstar.ltmle$Q1nstar <- etastar.ltmle$Q1nstar
-
-            #-------------------------
-            # evaluate EIF
-            #-------------------------
-            # write over original values
-            # same call as earlier, but now with Qnstar, gnstar
-            if.ltmle <- evaluateEIF(
-                A0 = A0, A1 = A1, L2 = L2, abar = abar, 
-                Q2n = Qnstar.ltmle$Q2nstar, Q1n = Qnstar.ltmle$Q1nstar, 
-                g1n = gnstar.ltmle$g1nstar, g0n = gnstar.ltmle$g0nstar
-            )
-            # mean of EIF
-            meanif.ltmle <- sum(colMeans(Reduce("cbind",if.ltmle)))
-            iter.ltmle <- iter.ltmle + 1
-        }
+        Q1nstar.ltmle <- targetQ1.ltmle(
+            A0 = A0, A1 = A1, L2 = L2, Qn = list(Q2n = Q2nstar.ltmle, Q1n = Qn$Q1n), gn = gn, 
+            abar = abar, tolg = tolg, tolQ = tolQ, return.models = return.models
+        )$Q1nstar
         
-        #------------------------------------------
-        # evaluate parameter and compute std err
-        #------------------------------------------
-        # evaluate parameter
-        psin.ltmle <- mean(Qnstar.ltmle$Q1nstar)
+        # point estimate
+        psin.ltmle <- mean(Q1nstar.ltmle)
         
-        # compute standard errors
-        se.ltmle <- sqrt(mean(Reduce("c",if.ltmle)^2)/length(A0))
-        # update iter
-        iter <- iter + 1
+        # influence functions
+        if.ltmle <- evaluateEIF(
+            A0 = A0, A1 = A1, L2 = L2, Q2n = Q2nstar.ltmle, 
+            Q1n = Q1nstar.ltmle, g1n = gn$g1n, g0n = gn$g0n, abar = abar
+        )
+        
+        # se
+        se.ltmle <- sqrt(mean(
+            (if.ltmle$Dstar2 + if.ltmle$Dstar1 + if.ltmle$Dstar0)^2
+        )/length(A0))
+        
     } # end if(return.ltmle)
     
     #----------------------------
@@ -365,6 +343,9 @@ drinf.tmle <- function(L0, L1, L2,
     if(return.ltmle){
         out$est.naive <- mean(Qn$Q1n)
     }
+    
+    # number of iterations
+    out$iter <- iter
     
     # model output
     out$Qmod <- vector(mode = "list")

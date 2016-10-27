@@ -19,10 +19,11 @@
 #' @return A \code{list} with predictions equal to truth + error
 
 truthG <- function(
-    Y, X, newX, family, obsWeights, b=1,  b0 = 1, r = -1/4, ...
+    Y, X, newX, family, obsWeights, b=0.25,  b0 = 1, r = -1/4, ...
 ){
     n <- length(Y)
-    err <- runif(nrow(newX), min = -n^(r), max = n^(r))
+    #err <- runif(nrow(newX), min = -n^(r), max = n^(r))
+    err <- runif(nrow(newX), min = -n^r, max = n^(r))
     
     # for g0n the number of columns will only be 2
     if(ncol(X) == 2){
