@@ -43,6 +43,7 @@ estimateQr <- function(
     Q2rmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Qr),args=list(
         Y=rQ2[A0==abar[1]], # fit only using A0==abar[1] obs. 
         X=data.frame(g1n = g1n[A0==abar[1]]),
+        newX = data.frame(g1n = g1n[A0==abar[1]]),
         obsWeights = rep(1, length(g1n[A0==abar[1]])),
         family = gaussian(),
         SL.library=SL.Qr,
@@ -76,6 +77,7 @@ estimateQr <- function(
     Q1rmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Qr),args=list(
         Y=rQ1, # fit using all obs. 
         X=data.frame(g0n = g0n),
+        newX=data.frame(g0n = g0n),
         SL.library=SL.Qr,
         obsWeights = rep(1, length(g0n)),
         family = gaussian(),
@@ -92,7 +94,7 @@ estimateQr <- function(
             Q1nr <- Q1rmod$library.predict[,dslcol]
         }
     }else{
-        Q1nr <- Q2mod$pred
+        Q1nr <- Q1rmod$pred
     }
 
     #--------

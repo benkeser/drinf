@@ -24,7 +24,7 @@
 targetQ1 <- function(
     A0, A1, L2, Qn, gn, Qnr.gnr, 
     # Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q2nr.seta, Q1nr, g0nr, g1nr, h0nr, h1nr, hbarnr, 
-    abar, tolg, tolQ, return.models,...
+    abar, tolg, tolQ, return.models,tol.coef = 1e1, ...
 ){
     #-------------------------------------------
     # making outcomes for logistic fluctuation
@@ -79,13 +79,28 @@ targetQ1 <- function(
                           fc1 = flucCov1),
         family = binomial(), start = 0
     ))
-    # get predictions 
-    tmp <- predict(
-        flucmod1, 
-        newdata = data.frame(out = 0, fo = flucOff,
-                             fc1 = predCov1),
-        type = "response"
-    )
+
+    if(abs(flucmod1$coefficients) < tol.coef){
+        # get predictions 
+        tmp <- predict(
+            flucmod1, 
+            newdata = data.frame(out = 0, fo = flucOff,
+                                 fc1 = predCov1),
+            type = "response"
+        )
+    }else{
+        # use optim to try the minimization along submodel if glm 
+        # looks wonky
+        flucmod1 <- optim(
+                par = 0, fn = offnegloglik, gr = gradient.offnegloglik,
+                method = "L-BFGS-B", lower = -100, upper = 100,
+                control = list(maxit = 10000),
+                Y = Q2ns, offset = flucOff, weight = flucCov1
+            )
+        epsilon <- flucmod1$par
+        tmp <- plogis(flucOff + predCov1 * epsilon)
+    }
+
     # new offset 
     flucOff <- c(
         SuperLearner::trimLogit(tmp, trim = tolQ)
@@ -97,14 +112,28 @@ targetQ1 <- function(
                           fc1 = flucCov2),
         family = binomial(), start = 0
     ))
-    # get predictions 
-    Q1nstar <- predict(
-        flucmod2, 
-        newdata = data.frame(out = 0, fo = flucOff,
-                             fc1 = predCov2),
-        type = "response"
-    )*(L2.max - L2.min) + L2.min
-    
+
+    if(abs(flucmod2$coefficients) < tol.coef){
+        # get predictions 
+        Q1nstar <- predict(
+            flucmod2, 
+            newdata = data.frame(out = 0, fo = flucOff,
+                                 fc1 = predCov2),
+            type = "response"
+        )*(L2.max - L2.min) + L2.min
+    }else{
+        # use optim to try the minimization along intercept only submodel if glm 
+        # looks wonky
+        flucmod2 <- optim(
+            par = 0, fn = wnegloglik, gr = gradient.wnegloglik,
+            method = "L-BFGS-B", lower = -100, upper = 100,
+            control = list(maxit = 10000),
+            Y = Q2ns, offset = flucOff, weight = flucCov2
+        )
+        epsilon <- flucmod2$par
+        Q1nstar <- plogis(flucOff +  epsilon)*(L2.max - L2.min) + L2.min
+    }    
+ 
     #--------------
     # output 
     #-------------

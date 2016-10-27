@@ -36,28 +36,25 @@ targetQg.ltmle <- function(
     # scale L2
     L2s <- (L2 - L2.min)/(L2.max - L2.min)
     # scale Q2n for when it's an offset with L2 as outcome
-    Q2ns.off <- (Q2n - L2.min)/(L2.max - L2.min)
-    # scale Q2n for when it's the outcome with Q1n as offset
-    Q2ns.out <- (Q2n - Q2n.min)/(Q2n.max - Q2n.min)
-    # scall Q1n for when it's an offset with Q2n as outcome
-    Q1ns.off <- (Q1n - Q2n.min)/(Q2n.max - Q2n.min)
+    Q2ns<- (Q2n - L2.min)/(L2.max - L2.min)
+    Q1ns <- (Q1n - L2.min)/(L2.max - L2.min)
     
-    flucOut <- c(Q2ns.out, L2s)
+    flucOut <- c(Q2ns, L2s)
     
     #-------------------------------------------
     # making offsets for logistic fluctuation
     #-------------------------------------------
     flucOff <- c(
-        SuperLearner::trimLogit(Q1ns.off, trim = tolQ),
-        SuperLearner::trimLogit(Q2ns.off, trim = tolQ)
+        SuperLearner::trimLogit(Q1ns, trim = tolQ),
+        SuperLearner::trimLogit(Q2ns, trim = tolQ)
     )
     
     #-------------------------------------------
     # making covariates for fluctuation
     #-------------------------------------------
     flucCov <- c(
-        as.numeric(A0 == abar[1]) * (1/g0n), # for Q2n as outcome, logit(Q1n) offset
-        as.numeric(A0==abar[1] & A1==abar[2]) / (g0n * g1n)  # for L2 as outcome, logit(Q2n) as covariate
+        (L2.max - L2.min)*as.numeric(A0 == abar[1]) * (1/g0n), # for Q2n as outcome, logit(Q1n) offset
+        (L2.max - L2.min)*as.numeric(A0==abar[1] & A1==abar[2]) / (g0n * g1n)  # for L2 as outcome, logit(Q2n) as covariate
     )
     
     #-------------------------------------------
@@ -66,8 +63,8 @@ targetQg.ltmle <- function(
     # getting the values of the clever covariates evaluated at 
     # \bar{A} = abar
     predCov <- c(
-        1/g0n, # all A0 == abar[1]
-        1/(g0n * g1n)  # all c(A0,A1) = abar
+        (L2.max - L2.min)*1/g0n, # all A0 == abar[1]
+        (L2.max - L2.min)*1/(g0n * g1n)  # all c(A0,A1) = abar
     )
     
     #-------------------------------------------
@@ -93,9 +90,9 @@ targetQg.ltmle <- function(
     # assign etastar values to corresponding nuisance parameters 
     #------------------------------------------------------------
     # length of output
-    n <- length(etastar)
+    n <- length(A0)
     # first n entries are Q1nstar and transform back to original scale
-    Q1nstar <- etastar[(1):(n)]*(Q2n.max - Q2n.min) + Q2n.min
+    Q1nstar <- etastar[(1):(n)]*(L2.max - L2.min) + L2.min
     # next n entries are Q2nstar and transform back to original scale
     Q2nstar <- etastar[(n+1):(2*n)]*(L2.max - L2.min) + L2.min
     

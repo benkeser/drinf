@@ -13,19 +13,20 @@ library(drinf)
 # debug(targetQg)
 # debug(drinf.tmle)
 # debug(targetg0); debug(targetg1)
+set.seed(1234)
 test <- drinf.tmle(
     L0 = L0, L1 = L1, L2 = L2, A0 = A0, A1 = A1, 
     abar = c(1,1), SL.Q = c("SL.glm","SL.mean","SL.gam"),
     SL.g = c("SL.glm","SL.mean","SL.gam"), 
-    SL.Qr = getFromNamespace("SuperLearner","SL.gam"),
-    SL.gr = getFromNamespace("SuperLearner","SL.gam"),
+    SL.Qr = getFromNamespace("SL.gam","SuperLearner"),
+    SL.gr = getFromNamespace("SL.gam","SuperLearner"),
 #    flucOrd = c("targetg0","targetg1","targetQ2","targetQ1"),
     flucOrd = c("targetg0","redReg","targetg1","redReg",
                 "targetQ2","redReg","targetQ1"),
     return.models = FALSE,
     verbose = FALSE,
     maxIter = 100,
-    return.ltmle = FALSE,
+    return.ltmle = TRUE,
     allatonce = TRUE,
     tolg = 1e-4,
     tolQ = 1e-4

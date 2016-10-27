@@ -4,7 +4,8 @@
 \alias{targetQ1}
 \title{targetQ1}
 \usage{
-targetQ1(A0, A1, L2, Qn, gn, Qnr.gnr, abar, tolg, tolQ, return.models, ...)
+targetQ1(A0, A1, L2, Qn, gn, Qnr.gnr, abar, tolg, tolQ, return.models,
+  tol.coef = 10, ...)
 }
 \arguments{
 \item{A0}{A \code{vector} treatment delivered at baseline.}

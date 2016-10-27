@@ -1,3 +1,4 @@
+
 #' evaluateEIF
 #' 
 #' Function that returns estimated efficient influence function contributions.

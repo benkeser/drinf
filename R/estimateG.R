@@ -53,7 +53,7 @@ estimateG <- function(
         #--------
         g0mod <- do.call(
             ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.g),args = c(list(
-            Y=as.numeric(A0==abar[1]), X=L0, 
+            Y=as.numeric(A0==abar[1]), X=L0, newX = L0, 
             SL.library=SL.g, obsWeights = rep(1, length(A0)),
             verbose=verbose), SL.g.options
         ))

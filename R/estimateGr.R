@@ -47,6 +47,7 @@ estimategr <- function(
     g0rmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.gr),args=list(
         Y=as.numeric(A0==abar[1]),  
         X=data.frame(Q1n = Q1n),
+        newX=data.frame(Q1n = Q1n),
         SL.library=SL.gr,
         obsWeights = rep(1, length(Q1n)),
         family = binomial(),
@@ -72,6 +73,7 @@ estimategr <- function(
     g1rmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.gr),args=list(
         Y=as.numeric(A0==abar[1] & A1==abar[2]), 
         X=data.frame(Q2n = Q2n),
+        newX = data.frame(Q2n = Q2n),
         SL.library=SL.gr,
         obsWeights = rep(1, length(Q2n)),
         family = binomial(),
@@ -98,6 +100,7 @@ estimategr <- function(
     h0rmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.gr),args=list(
         Y=rg0,
         X=data.frame(Q1n = Q1n),
+        newX = data.frame(Q1n = Q1n),
         SL.library=SL.gr,
         obsWeights = rep(1, length(Q1n)),
         family = gaussian(),
@@ -122,6 +125,7 @@ estimategr <- function(
     h1rmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.gr),args=list(
         Y=rg1,
         X=data.frame(Q2n = Q2n),
+        newX = data.frame(Q2n = Q2n),
         SL.library=SL.gr,
         obsWeights = rep(1, length(Q2n)),
         family = gaussian(),
@@ -146,6 +150,7 @@ estimategr <- function(
     hbarrmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.gr),args=list(
         Y=A0/g0nr * h0nr,
         X=data.frame(Q2n = Q2n),
+        newX = data.frame(Q2n = Q2n),
         SL.library=SL.gr,
         obsWeights = rep(1, length(Q2n)),
         family = gaussian(),

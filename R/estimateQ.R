@@ -95,7 +95,7 @@ estimateQ <- function(
         Q1mod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Q),args = c(list(
             Y=eval(parse(text=paste0(
                 ifelse(stratify,
-                       "Q2n[A0==abar[1],]",
+                       "Q2n[A0==abar[1]]",
                        "Q2n"
                 )
             ))), 

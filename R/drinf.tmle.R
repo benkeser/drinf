@@ -202,7 +202,7 @@ drinf.tmle <- function(L0, L1, L2,
         # compute reduced dimension regressions
         #----------------------------------------
         Qnr.gnr <- redReg(A0 = A0, A1 = A1, L2 = L2, abar = abar, 
-                          gn = gn, Qn = Qn, verbose = verbose, tolg = tolg, 
+                          gn = gnstar, Qn = Qnstar, verbose = verbose, tolg = tolg, 
                           SL.Qr = SL.Qr, SL.gr = SL.gr, return.models = return.models)
         
         #--------------------
@@ -288,18 +288,6 @@ drinf.tmle <- function(L0, L1, L2,
     # Computing the regular LTMLE
     #-----------------------------------
     if(return.ltmle){
-        #-------------------------
-        # evaluate IF
-        #-------------------------
-        # TO DO : This is redundant -- should it be renamed above to 
-        # avoid this redundancy?
-        if.ltmle <- evaluateEIF(
-            A0 = A0, A1 = A1, L2 = L2, Q2n = Qn$Q2n, Q1n = Qn$Q1n, 
-            g1n = gn$g1n, g0n = gn$g0n, abar
-        )
-        # mean of IC
-        meanif.ltmle <- sum(colMeans(Reduce("cbind",if.ltmle)))
-        
         # initialize vectors in Qnstar and gnstar that will hold
         # targeted nuisance parameters by setting equal to the initial values
         Qnstar.ltmle <- vector(mode = "list")
@@ -311,6 +299,7 @@ drinf.tmle <- function(L0, L1, L2,
         gnstar.ltmle$g0nstar <- gn$g0n
         
         iter.ltmle <- 1
+        meanif.ltmle <- Inf
         while((abs(meanif.ltmle) > tolIF & iter.ltmle < maxIter) | iter.ltmle == 1){
             #--------------------
             # fluctuate Q and g
@@ -324,10 +313,9 @@ drinf.tmle <- function(L0, L1, L2,
             #--------------------------------------------------------
             # assign new values of nuisance parameters to Qn and gn
             #--------------------------------------------------------
-            Qnstar.ltmle$Q2star <- etastar.ltmle$Q1nstar
-            Qnstar.ltmle$Q1star <- etastar.ltmle$Q0nstar
-            gnstar.ltmle$g1star <- etastar.ltmle$g1nstar
-            gnstar.ltmle$g0star <- etastar.ltmle$g0nstar
+            Qnstar.ltmle$Q2nstar <- etastar.ltmle$Q2nstar
+            Qnstar.ltmle$Q1nstar <- etastar.ltmle$Q1nstar
+
             #-------------------------
             # evaluate EIF
             #-------------------------
@@ -340,6 +328,7 @@ drinf.tmle <- function(L0, L1, L2,
             )
             # mean of EIF
             meanif.ltmle <- sum(colMeans(Reduce("cbind",if.ltmle)))
+            iter.ltmle <- iter.ltmle + 1
         }
         
         #------------------------------------------
