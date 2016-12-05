@@ -27,7 +27,7 @@
 targetQ2 <- function(
     A0, A1, L2, Qn, gn, Qnr.gnr, 
     # Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q2nr.seta, Q1nr, g0nr, g1nr, h0nr, h1nr, hbarnr, 
-    abar, tolg, tolQ, return.models, tol.coef = 1e1, ...
+    abar, tolg, tolQ, return.models, tol.coef = 1e2, ...
 ){
     #-------------------------------------------
     # making outcomes for logistic fluctuation
@@ -100,7 +100,7 @@ targetQ2 <- function(
         # looks wonky
         flucmod1 <- optim(
                 par = 0, fn = offnegloglik, gr = gradient.offnegloglik,
-                method = "L-BFGS-B", lower = -100, upper = 100,
+                method = "L-BFGS-B", lower = -tol.coef, upper = tol.coef,
                 control = list(maxit = 10000),
                 Y = L2s, offset = flucOff, weight = flucCov1
             )
@@ -119,6 +119,7 @@ targetQ2 <- function(
                           fc1 = flucCov2),
         family = binomial(), start = 0
     ))
+
     
     if(abs(flucmod2$coefficients) < tol.coef){
         # get predictions 
@@ -133,7 +134,7 @@ targetQ2 <- function(
         # looks wonky
         flucmod2 <- optim(
             par = 0, fn = wnegloglik, gr = gradient.wnegloglik,
-            method = "L-BFGS-B", lower = -100, upper = 100,
+            method = "L-BFGS-B", lower = -tol.coef, upper = tol.coef,
             control = list(maxit = 10000),
             Y = L2s, offset = flucOff, weight = flucCov2
         )

@@ -5,7 +5,7 @@
 \title{targetQ2}
 \usage{
 targetQ2(A0, A1, L2, Qn, gn, Qnr.gnr, abar, tolg, tolQ, return.models,
-  tol.coef = 10, ...)
+  tol.coef = 100, ...)
 }
 \arguments{
 \item{A0}{A \code{vector} treatment delivered at baseline.}
