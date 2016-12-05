@@ -27,7 +27,7 @@ truthG <- function(
     
     # for g0n the number of columns will only be 2
     if(ncol(X) == 2){
-        pred <- plogis(b0 + b*newX$L0.1 - 2*b*newX$L0.2*newX$L0.1 + err)
+        pred <- plogis(2*b0 + b*newX$L0.1 - 2*b*newX$L0.2*newX$L0.1 + err)
     }else{
         n <- length(Y)
         pred <- plogis(2*b0 + b*newX$L0.1 - 2*b*newX$L0.2*newX$L0.1+ 
