@@ -14,16 +14,16 @@
 #' @param b Interaction coefficient for L01 and L11
 #' @param b0 The intercept
 #' @param r The exponent of the rate at which error goes to zero as function of n.
-#' 
+#' @param cons The constant in front of the rate (default = 1)
 #' @export 
 #' @return A \code{list} with predictions equal to truth + error
 
 truthG <- function(
-    Y, X, newX, family, obsWeights, b=0.25,  b0 = 1, r = -1/4, ...
+    Y, X, newX, family, obsWeights, b=0.5,  b0 = 1, r = -1/4, cons = 2, ...
 ){
     n <- length(Y)
     #err <- runif(nrow(newX), min = -n^(r), max = n^(r))
-    err <- runif(nrow(newX), min = -n^r, max = n^(r))
+    err <- cons*runif(nrow(newX), min = -n^r, max = n^(r))
     
     # for g0n the number of columns will only be 2
     if(ncol(X) == 2){

@@ -24,7 +24,6 @@
 
 targetQ1.ltmle <- function(
     A0, A1, L2, Qn, gn, 
-    # Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q2nr.seta, Q1nr, g0nr, g1nr, h0nr, h1nr, hbarnr, 
     abar, tolg, tolQ, return.models, tol.coef = 1e1, ...
 ){
     #-------------------------------------------
@@ -83,7 +82,7 @@ targetQ1.ltmle <- function(
             newdata = data.frame(out = 0, fo = flucOff,
                                  fc1 = predCov1),
             type = "response"
-        )
+        )*(L2.max - L2.min) + L2.min
     }else{
         # use optim to try the minimization along submodel if glm 
         # looks wonky
@@ -94,7 +93,7 @@ targetQ1.ltmle <- function(
             Y = Q2ns, offset = flucOff, weight = flucCov1
         )
         epsilon <- flucmod1$par
-        Q1nstar <- plogis(flucOff + predCov1 * epsilon)
+        Q1nstar <- plogis(flucOff + predCov1 * epsilon)*(L2.max - L2.min) + L2.min
     }
     
     

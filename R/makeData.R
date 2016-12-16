@@ -1,4 +1,4 @@
-#' makeData
+#' makeData.old
 #' 
 #' A function to simulate data for use in the simulation study. The function
 #' can be used to generate observed data or data from an intervened SCM; the latter
@@ -27,7 +27,7 @@
 #' 
 #' @return A \code{list} with L0, A0, L1, A1, L2 to input into \code{drinf.tmle}.
 
-makeData <- function(n, b = 0.25, b0 = 1, ba = -0.25, setA = NULL){
+makeData.old <- function(n, b = 0.25, b0 = 1, ba = -0.25, setA = NULL){
     L0.1 <- runif(n, -4, 4)
     L0.2 <- rbinom(n, 1, 0.5)
     

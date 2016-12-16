@@ -22,7 +22,6 @@
 
 targetg1 <- function(
     A0, A1, L2, Qn, gn, Qnr.gnr, 
-    # Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q2nr.seta, Q1nr, g0nr, g1nr, h0nr, h1nr, hbarnr, 
     abar, tolg, tolQ, return.models,tol.coef=1e1, ...
 ){
     #-------------------------------------------

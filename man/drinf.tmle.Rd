@@ -6,12 +6,13 @@
 \usage{
 drinf.tmle(L0, L1, L2, A0, A1, abar = c(1, 1), stratify = TRUE,
   SL.Q = NULL, SL.g = NULL, SL.Qr = NULL, SL.gr = NULL, glm.Q = NULL,
-  glm.g = NULL, guard = c("Q", "g"), flucOrd = c("targetQ2", "targetQ1",
-  "targetg1", "targetg0"), return.models = FALSE, maxIter = 20,
-  tolIF = 1/(10 * sqrt(length(L2))), tolg = 1e-08, tolQ = 1e-08,
-  verbose = TRUE, SL.Q.options = list(family = gaussian()),
-  SL.g.options = list(family = binomial()), glm.Q.options = list(family =
-  gaussian()), return.ltmle = TRUE, return.naive = TRUE, ...)
+  glm.g = NULL, guard = c("Q", "g"), universal = FALSE,
+  universalStepSize = 1e-04, printFreq = 50, flucOrd = c("targetQ2",
+  "targetQ1", "targetg1", "targetg0"), return.models = FALSE, maxIter = 20,
+  tolIF = 1/(length(L2)), tolg = 1e-08, tolQ = 1e-08, verbose = TRUE,
+  SL.Q.options = list(family = gaussian()), SL.g.options = list(family =
+  binomial()), glm.Q.options = list(family = gaussian()),
+  return.ltmle = TRUE, return.naive = TRUE, ...)
 }
 \arguments{
 \item{L0}{A \code{data.frame} featuring covariates measured at baseline.}
@@ -60,6 +61,12 @@ Only used if \code{SL.g = NULL}.}
 Indicates whether to guard against misspecification of outcome or treatment regressions or both. Currently only works
 with \code{c("Q","g")}.}
 
+\item{universal}{A \code{boolean} indicating whether to perform TMLE step using locally least favorable
+parametric submodels (if \code{FALSE}) or universally least favorable submodels (if \code{TRUE})}
+
+\item{universalStepSize}{A \code{numeric} indicating the step size for the recursive calculation of 
+universally least favorable submodel. Default is \code{0.005}.}
+
 \item{return.models}{A \code{boolean} indicating whether the models for Q, g, Qr, and gr should be 
 returned with the output.}
 
@@ -69,6 +76,8 @@ returned with the output.}
 estimated influence curve.}
 
 \item{tolg}{A \code{numeric} indicating the truncation level for conditional treatment probabilities.}
+
+\item{tolQ}{A \code{numeric} indicating the truncation level for transformed outcome regressions.}
 
 \item{verbose}{A \code{boolean} indicating whether messages should be printed to indicate progress.}
 
