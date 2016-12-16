@@ -69,7 +69,7 @@ makeData <- function(n, b = 0.5, b0 = 1, ba = -0.25, rho=0.05, setA = NULL){
 #' @return A \code{list} with predictions equal to truth + error
 
 truthQ <- function(
-    Y, X, newX, family, obsWeights, ba = -0.25, b=0.5, r=-1/4, cons = 2, ...
+    Y, X, newX, family, obsWeights, b0 = 1, ba = -0.25, b=0.5, r=-1/4, cons = 2, ...
 ){  
     c00 <- 2*b0 + b*newX$L0.1 - 2*b*newX$L0.2*newX$L0.1
     c0 <- ba*1 + ba*1 + c00
