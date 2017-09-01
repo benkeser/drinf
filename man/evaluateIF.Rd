@@ -47,4 +47,3 @@ EIF at the nuisance parameter estimates evaluated at the observations.
 \description{
 Function that returns estimated influence function contributions.
 }
-

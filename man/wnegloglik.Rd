@@ -22,4 +22,3 @@ A \code{numeric} value of the negative log-likelihood loss
 A function that computes the weighted negative log-likelihood loss of the 
 intercept only fluctuation model.
 }
-

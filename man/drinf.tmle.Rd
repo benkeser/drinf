@@ -108,4 +108,3 @@ minimum loss-based estimation.
 \examples{
 TO DO : Add Examples
 }
-

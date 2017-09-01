@@ -35,4 +35,3 @@ g00 and g10 plus an error term. The function is written for compatibility
 with the drinf.tmle function, i.e., as though it were a SuperLearner wrapper.
 If \code{newX} is two columns, returns g0n, if four columns, returns g1n.
 }
-

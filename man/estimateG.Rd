@@ -51,4 +51,3 @@ This function computes the conditional treatment probabilities at both timepoint
 \examples{
 TO DO : add examples
 }
-

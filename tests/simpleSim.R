@@ -118,7 +118,7 @@ test <- drinf.tmle(
 
 # g right, Q wrong
 set.seed(1234)
-grbg <- makeData(500)
+grbg <- makeData(1000)
 test <- drinf.tmle(
     L0 = grbg$L0, L1 = grbg$L1, L2 = grbg$L2, A0 = grbg$A0, A1 = grbg$A1, 
     abar = c(1,1), 
@@ -132,10 +132,11 @@ test <- drinf.tmle(
                 "targetQ2","redReg","targetQ1"),
     return.models = FALSE,
     verbose = FALSE,
-    maxIter = 40,
+    maxIter = 100,
     return.ltmle = TRUE,
-    tolg = 1e-4,
+    tolg = 1e-1,
     tolQ = 1e-4,
+    tolIF = 1/1000,
     SL.Q.options = list(family = binomial())
 )
 

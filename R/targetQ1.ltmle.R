@@ -52,7 +52,8 @@ targetQ1.ltmle <- function(
     #-------------------------------------------
     # the original "clever covariates"
     flucCov1 <- c(
-        (L2.max - L2.min) * as.numeric(A0==abar[1])/(gn$g0n) # the usual guy
+        # (L2.max - L2.min) * as.numeric(A0==abar[1])/(gn$g0n) # the usual guy
+        as.numeric(A0==abar[1])/(gn$g0n) # the usual guy
     )
     
     #-------------------------------------------
@@ -61,7 +62,8 @@ targetQ1.ltmle <- function(
     # getting the values of the clever covariates evaluated at 
     # \bar{A} = abar
     predCov1 <- c(
-        (L2.max - L2.min)/(gn$g0n)  # all c(A0,A1) = abar
+        # (L2.max - L2.min)/(gn$g0n)  # all c(A0,A1) = abar
+        1/(gn$g0n)  # all c(A0,A1) = abar
     )
     
     #-------------------------------------------

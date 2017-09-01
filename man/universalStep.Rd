@@ -30,4 +30,3 @@ one for extra Q terms).}
 Take one step in the practical construction of the universally 
 least favorable submodel.
 }
-

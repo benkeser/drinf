@@ -31,4 +31,3 @@ A \code{numeric} value for the empirical risk
 \description{
 Function that returns empirical risk
 }
-

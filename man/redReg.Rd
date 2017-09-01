@@ -15,4 +15,3 @@ for details.
 Function that computes the reduced dimension regressions needed for the 
 extra targeting steps of the tmle.
 }
-

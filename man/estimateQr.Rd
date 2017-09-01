@@ -48,4 +48,3 @@ the \code{NNLS} procedure in the Super Learner ensemble fails and so the functio
 zero weights for every coefficient. In this case, the code will default to using the discrete
 Super Learner; that is, the learner with lowest CV-risk.
 }
-

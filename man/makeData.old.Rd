@@ -41,4 +41,3 @@ is achieved via the \code{setA} option. The data are simulated as follows:
 \item L2 ~ Bernoulli(expit(ba*A0 + ba*A1 + b*L0.1 - 2*b*L0.2*L0.1 + b*L1.1 - 2*b*L1.2*L1.1))
 }
 }
-

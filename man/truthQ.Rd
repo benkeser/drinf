@@ -4,8 +4,8 @@
 \alias{truthQ}
 \title{truthQ}
 \usage{
-truthQ(Y, X, newX, family, obsWeights, ba = -0.25, b = 0.5, r = -1/4,
-  cons = 2, ...)
+truthQ(Y, X, newX, family, obsWeights, b0 = 1, ba = -0.25, b = 0.5,
+  r = -1/4, cons = 2, ...)
 }
 \arguments{
 \item{Y}{The outcome}
@@ -34,4 +34,3 @@ Q10 and Q20 plus an error term. The function is written for compatibility
 with the drinf.tmle function, i.e., as though it were a SuperLearner wrapper.
 If \code{newX} is two columns, returns Q1n, if four columns, returns Q2n.
 }
-

@@ -22,4 +22,3 @@ data inputs.
 \description{
 gradient.wnegloglik
 }
-

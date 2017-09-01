@@ -54,4 +54,3 @@ This function computes the conditional treatment probabilities at time 1
 \examples{
 TO DO : add examples
 }
-

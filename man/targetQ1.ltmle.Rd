@@ -40,4 +40,3 @@ fluctuated nuisance parameters evaluated at the observed data values. If
 \description{
 Function that targets Q2n for ltmle.
 }
-

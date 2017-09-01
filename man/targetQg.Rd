@@ -65,4 +65,3 @@ approximations that result from misspecification. Fits a single logistic
 fluctuation regression of c(A0, A1, Q2n, L2) on relevant offsets and so-called
 clever covariates.
 }
-

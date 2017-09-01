@@ -39,4 +39,3 @@ Function that targets estimates of Q to solve the EIF. Fits a single logistic
 fluctuation regression of c(Q2n, L2) on relevant offsets and so-called
 clever covariates.
 }
-

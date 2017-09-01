@@ -32,4 +32,3 @@ reduced dimension regressions on g0n and g1n, respectively.
 This function computes the residuals that are used as outcomes in the 
 reduced dimension regressions for Q.
 }
-

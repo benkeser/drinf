@@ -53,8 +53,10 @@ targetQg.ltmle <- function(
     # making covariates for fluctuation
     #-------------------------------------------
     flucCov <- c(
-        (L2.max - L2.min)*as.numeric(A0 == abar[1]) * (1/g0n), # for Q2n as outcome, logit(Q1n) offset
-        (L2.max - L2.min)*as.numeric(A0==abar[1] & A1==abar[2]) / (g0n * g1n)  # for L2 as outcome, logit(Q2n) as covariate
+        # (L2.max - L2.min)*as.numeric(A0 == abar[1]) * (1/g0n), # for Q2n as outcome, logit(Q1n) offset
+        as.numeric(A0 == abar[1]) * (1/g0n), # for Q2n as outcome, logit(Q1n) offset
+        # (L2.max - L2.min)*as.numeric(A0==abar[1] & A1==abar[2]) / (g0n * g1n)  # for L2 as outcome, logit(Q2n) as covariate
+        as.numeric(A0==abar[1] & A1==abar[2]) / (g0n * g1n)  # for L2 as outcome, logit(Q2n) as covariate
     )
     
     #-------------------------------------------
@@ -63,8 +65,10 @@ targetQg.ltmle <- function(
     # getting the values of the clever covariates evaluated at 
     # \bar{A} = abar
     predCov <- c(
-        (L2.max - L2.min)*1/g0n, # all A0 == abar[1]
-        (L2.max - L2.min)*1/(g0n * g1n)  # all c(A0,A1) = abar
+        # (L2.max - L2.min)*1/g0n, # all A0 == abar[1]
+        1/g0n, # all A0 == abar[1]
+        # (L2.max - L2.min)*1/(g0n * g1n)  # all c(A0,A1) = abar
+        1/(g0n * g1n)  # all c(A0,A1) = abar
     )
     
     #-------------------------------------------

@@ -77,17 +77,22 @@ targetQg <- function(
     flucCov1 <- c(
         rep(0,n), 
         rep(0,n),
-        (L2.max - L2.min) * as.numeric(A0 == abar[1])/gn$g0n, # the usual guy
-        (L2.max - L2.min) * as.numeric(A0==abar[1] & A1==abar[2])/(gn$g0n * gn$g1n) # the usual guy
+        # (L2.max - L2.min) * as.numeric(A0 == abar[1])/gn$g0n, # the usual guy
+        as.numeric(A0 == abar[1])/gn$g0n, # the usual guy
+        # (L2.max - L2.min) * as.numeric(A0==abar[1] & A1==abar[2])/(gn$g0n * gn$g1n) # the usual guy
+        as.numeric(A0==abar[1] & A1==abar[2])/(gn$g0n * gn$g1n) # the usual guy
     )
     # the new "clever covariates" for Q
     flucCov2 <- c(
         rep(0, n), # not needed for A0
         rep(0, n), # not needed for A1    
         # the extra term for targeting Q1n
-        (L2.max - L2.min) * as.numeric(A0 == abar[1]) * (Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr),
+        # (L2.max - L2.min) * as.numeric(A0 == abar[1]) * (Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr),
+        as.numeric(A0 == abar[1]) * (Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr),
         # the sum of the extra two terms for targeting Q2n
-        (L2.max - L2.min) * as.numeric(A0==abar[1] & A1==abar[2]) *  
+        # (L2.max - L2.min) * as.numeric(A0==abar[1] & A1==abar[2]) *  
+            # ((Qnr.gnr$gnr$hbarnr + Qnr.gnr$gnr$h1nr)/Qnr.gnr$gnr$g1nr)
+        as.numeric(A0==abar[1] & A1==abar[2]) *  
             ((Qnr.gnr$gnr$hbarnr + Qnr.gnr$gnr$h1nr)/Qnr.gnr$gnr$g1nr)
     )
     # the new "clever covariates" for g
@@ -108,14 +113,18 @@ targetQg <- function(
     # \bar{A} = abar
     predCov1 <- c(
         rep(0,n), rep(0,n),
-        (L2.max - L2.min)/gn$g0n, # all A0 == abar[1]
-        (L2.max - L2.min)/(gn$g0n * gn$g1n)  # all c(A0,A1) = abar
+        # (L2.max - L2.min)/gn$g0n, # all A0 == abar[1]
+        1/gn$g0n, # all A0 == abar[1]
+        # (L2.max - L2.min)/(gn$g0n * gn$g1n)  # all c(A0,A1) = abar
+        1/(gn$g0n * gn$g1n)  # all c(A0,A1) = abar
     )
     
     predCov2 <- c(
         rep(0,n), rep(0,n),
-        (L2.max - L2.min) * Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr, # all A0 == abar[1]
-        (L2.max - L2.min) * (Qnr.gnr$gnr$hbarnr + Qnr.gnr$gnr$h1nr)/Qnr.gnr$gnr$g1nr  # all c(A0,A1) = abar
+        # (L2.max - L2.min) * Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr, # all A0 == abar[1]
+        Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr, # all A0 == abar[1]
+        # (L2.max - L2.min) * (Qnr.gnr$gnr$hbarnr + Qnr.gnr$gnr$h1nr)/Qnr.gnr$gnr$g1nr  # all c(A0,A1) = abar
+        (Qnr.gnr$gnr$hbarnr + Qnr.gnr$gnr$h1nr)/Qnr.gnr$gnr$g1nr  # all c(A0,A1) = abar
     )
     
     predCov3 <- c(

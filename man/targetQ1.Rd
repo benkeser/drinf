@@ -39,4 +39,3 @@ fluctuated nuisance parameters evaluated at the observed data values. If
 Function that targets Q1n in two steps. First solving original equations, then
 solving sum of two new equations.
 }
-

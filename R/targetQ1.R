@@ -49,11 +49,13 @@ targetQ1 <- function(
     #-------------------------------------------
     # the original "clever covariates"
     flucCov1 <- c(
-        (L2.max - L2.min) * as.numeric(A0 == abar[1])/gn$g0n # the usual guy
+        # (L2.max - L2.min) * as.numeric(A0 == abar[1])/gn$g0n # the usual guy
+        as.numeric(A0 == abar[1])/gn$g0n # the usual guy
     )
     # the new "clever covariates" for Q
     flucCov2 <- c(
-        (L2.max - L2.min) * as.numeric(A0 == abar[1]) * (Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr)
+        # (L2.max - L2.min) * as.numeric(A0 == abar[1]) * (Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr)
+        as.numeric(A0 == abar[1]) * (Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr)
     )
     
     #-------------------------------------------
@@ -62,11 +64,13 @@ targetQ1 <- function(
     # getting the values of the clever covariates evaluated at 
     # \bar{A} = abar
     predCov1 <- c(
-        (L2.max - L2.min)/gn$g0n # all A0 == abar[1]
+        # (L2.max - L2.min)/gn$g0n # all A0 == abar[1]
+        1/gn$g0n # all A0 == abar[1]
     )
     
     predCov2 <- c(
-        (L2.max - L2.min) * Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr # all A0 == abar[1]
+        # (L2.max - L2.min) * Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr # all A0 == abar[1]
+        Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr # all A0 == abar[1]
     )
     
     #-------------------------------------------

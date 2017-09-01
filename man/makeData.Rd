@@ -14,4 +14,3 @@ A function to simulate data for use in the simulation study. The function
 can be used to generate observed data or data from an intervened SCM; the latter
 is achieved via the \code{setA} option.
 }
-
