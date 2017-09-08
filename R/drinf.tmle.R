@@ -479,7 +479,7 @@ drinf.tmle <- function(L0, L1, L2,
     out$grmod <- vector(mode = "list")
     
     # add on influence functions
-    out$if <- list(orig = mean(if.dr$Dstar0 + if.dr$Dstar1 + if.dr$Dstar2),
+    out$ic <- list(orig = mean(if.dr$Dstar0 + if.dr$Dstar1 + if.dr$Dstar2),
                    missQ = mean(if.dr$Dg1.Q2 + if.dr$Dg0.Q1),
                    missg = mean(if.dr$DQ2.g1 + if.dr$DQ2.g0 + if.dr$DQ1.g0))
 
