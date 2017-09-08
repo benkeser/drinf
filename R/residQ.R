@@ -19,9 +19,9 @@
 residQ <- function(
     L2, A0, A1, Q2n, Q1n, g0n, g1n, abar, ...
 ){
-    rQ1 <- as.numeric(A0==abar[1] & A1 == abar[2]) / (g0n*g1n) * (L2 - Q2n) + 
-        as.numeric(A0==abar[1])/g0n * (Q2n - Q1n)
-    rQ2 <- as.numeric(A0==abar[1] & A1 == abar[2])  / (g0n*g1n) * (L2 - Q2n)
+    rQ1 <- as.numeric(A0 == abar[1] & A1 == abar[2]) / (g1n) * (L2 - Q2n) + 
+        as.numeric(A0 == abar[1]) * (Q2n - Q1n)
+    rQ2 <- as.numeric(A0 == abar[1] & A1 == abar[2])  / (g0n) * (L2 - Q2n)
     return(list(
         rQ1 = rQ1, rQ2 = rQ2
     ))

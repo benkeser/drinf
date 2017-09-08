@@ -403,10 +403,10 @@ drinf.tmle <- function(L0, L1, L2,
     psin <- mean(Qnstar$Q1n)
        
     # compute standard errors
-    se <- sqrt(mean(
+    se <- sqrt(var(
             (if.dr$Dstar0 + if.dr$Dstar1 + if.dr$Dstar2 -
             if.dr$Dg1.Q2 - if.dr$Dg0.Q1 - if.dr$DQ2.g1 - 
-            if.dr$DQ2.g0 - if.dr$DQ1.g0)^2
+            if.dr$DQ2.g0 - if.dr$DQ1.g0)
     )/length(A0))
 
     #-----------------------------------
@@ -440,8 +440,8 @@ drinf.tmle <- function(L0, L1, L2,
         )
         
         # se
-        se.ltmle <- sqrt(mean(
-            (if.ltmle$Dstar2 + if.ltmle$Dstar1 + if.ltmle$Dstar0)^2
+        se.ltmle <- sqrt(var(
+            (if.ltmle$Dstar2 + if.ltmle$Dstar1 + if.ltmle$Dstar0)
         )/length(A0))
         
     } # end if(return.ltmle)
@@ -478,6 +478,11 @@ drinf.tmle <- function(L0, L1, L2,
     out$Qrmod <- vector(mode = "list")
     out$grmod <- vector(mode = "list")
     
+    # add on influence functions
+    out$if <- list(orig = mean(if.dr$Dstar0 + if.dr$Dstar1 + if.dr$Dstar2),
+                   missQ = mean(if.dr$Dg1.Q2 + if.dr$Dg0.Q1),
+                   missg = mean(if.dr$DQ2.g1 + if.dr$DQ2.g0 + if.dr$DQ1.g0))
+
     # setting up models for return
     if(return.models){
         out$Qmod$Q2n <- Qn$Q2nmod

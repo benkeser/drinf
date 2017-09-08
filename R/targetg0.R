@@ -22,7 +22,6 @@
 
 targetg0 <- function(
     A0, A1, L2, Qn, gn, Qnr.gnr, 
-    # Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q2nr.seta, Q1nr, g0nr, g1nr, h0nr, h1nr, hbarnr, 
     abar, tolg, tolQ, return.models,tol.coef=1e1, ...
 ){
     #-------------------------------------------
@@ -43,7 +42,7 @@ targetg0 <- function(
     #-------------------------------------------
     # the "clever covariates" for g1n
     flucCov1 <- c(
-        Qnr.gnr$Qnr$Q1nr / gn$g0n
+        Qnr.gnr$Qnr$Q1nr / gn$g0n^2
     )
     #-------------------------------------------
     # making covariates for prediction
@@ -51,7 +50,7 @@ targetg0 <- function(
     # getting the values of the clever covariates evaluated at 
     # \bar{A} = abar
     predCov1 <- c(
-        Qnr.gnr$Qnr$Q1nr / gn$g0n # no need to change this one
+        Qnr.gnr$Qnr$Q1nr / gn$g0n^2 # no need to change this one
     )
     
     #-------------------------------------------

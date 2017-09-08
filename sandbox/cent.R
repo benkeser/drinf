@@ -19,14 +19,20 @@ if(length(args) < 1){
 }
 
 ns <- c(500, 1000, 5000)
-bigB <- 2000
+bigB <- 1000
+g <- c("SL.hal9001","SL.glm")
+Q <- c("SL.hal9001","SL.glm")
 parm <- expand.grid(seed=1:bigB,
-                    n=ns)
+                    n=ns, g = g, Q = Q, stringsAsFactors = FALSE)
 
+parm <- parm[!(parm$g == "SL.glm" & parm$Q == "SL.glm"),]
 # source in simulation Functions
 source("~/drinf/makeData.R")
 # load drinf
 library(drinf, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.2/")
+library(hal9001, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.2/")
+library(SuperLearner)
+library(methods)
 
 # get the list size #########
 if (args[1] == 'listsize') {
@@ -35,12 +41,12 @@ if (args[1] == 'listsize') {
 
 # execute prepare job ##################
 if (args[1] == 'prepare') {
-  for(i in 1:nrow(parm)){
-     set.seed(parm$seed[i])
-     dat <- makeData(n=parm$n[i])
-     save(dat, file=paste0("~/drinf/scratch/dataList_n=",parm$n[i],
-                           "_seed=",parm$seed[i],".RData"))
-   }
+  # for(i in 1:nrow(parm)){
+  #    set.seed(parm$seed[i])
+  #    dat <- makeData(n=parm$n[i])
+  #    save(dat, file=paste0("~/drinf/scratch/dataList_n=",parm$n[i],
+  #                          "_seed=",parm$seed[i],".RData"))
+  #  }
    print(paste0('initial datasets saved to: ~/drinf/scratch/dataList ... .RData'))
 }
 
@@ -67,8 +73,8 @@ if (args[1] == 'run') {
     object <- drinf.tmle(
     L0 = dat$L0, L1 = dat$L1, L2 = dat$L2, A0 = dat$A0, A1 = dat$A1, 
     abar = c(1,1), 
-    SL.Q = "SL.hal9001",
-    SL.g = "SL.glm", 
+    SL.Q = parm$Q[i],
+    SL.g = parm$g[i], 
     SL.Qr = "SL.hal9001",
     SL.gr = "SL.hal9001",
     flucOrd = c("targetg0","targetg1","redReg",
@@ -77,7 +83,7 @@ if (args[1] == 'run') {
     universalStepSize = 1e-4,  
     return.models = FALSE,
     verbose = TRUE,
-    maxIter = 1,
+    maxIter = 3,
     return.ltmle = TRUE,
     allatonce = FALSE,
     tolg = 1e-2,
@@ -93,6 +99,7 @@ if (args[1] == 'run') {
     # drtmle est, ci, coverage
     # ltmle est, ci, coverage 
     out <- c(parm$seed[i], parm$n[i], truth, 
+             parm$Q[i], parm$g[i],
              object$est, drtmle_ci,
              as.numeric(drtmle_ci[1] < truth & drtmle_ci[2] > truth),
              object$est.ltmle, ltmle_ci,
@@ -100,36 +107,86 @@ if (args[1] == 'run') {
 
     # save output 
     save(out, file = paste0("~/drinf/scratch/out_n=",
-                            parm$n[i],"_seed=",parm$seed[i],".RData.tmp"))
+                            parm$n[i],"_seed=",parm$seed[i],
+                            "_Q=",parm$Q[i],"_g=",parm$g[i],".RData.tmp"))
     file.rename(paste0("~/drinf/scratch/out_n=",
-                       parm$n[i],"_seed=",parm$seed[i],".RData.tmp"),
+                       parm$n[i],"_seed=",parm$seed[i],
+                       "_Q=",parm$Q[i],"_g=",parm$g[i],".RData.tmp"),
                 paste0("~/drinf/scratch/out_n=",
-                       parm$n[i],"_seed=",parm$seed[i],".RData"))
+                       parm$n[i],"_seed=",parm$seed[i],
+                       "_Q=",parm$Q[i],"_g=",parm$g[i],".RData"))
   }
 }
 
 # merge job ###########################
 if (args[1] == 'merge') {   
     ns <- c(500, 1000, 5000)
-    bigB <- 2000
+    bigB <- 1000
+    g <- c("SL.hal9001","SL.glm")
+    Q <- c("SL.hal9001","SL.glm")
     parm <- expand.grid(seed=1:bigB,
-                        n=ns)
-
-
+                        n=ns, g = g, Q = Q, stringsAsFactors = FALSE)
+    parm <- parm[!(parm$g == "SL.glm" & parm$Q == "SL.glm"),]
     rslt <- NULL
     for(i in 1:nrow(parm)){
         tmp <- tryCatch({
             load(paste0("~/drinf/scratch/out_n=",
-                        parm$n[i],"_seed=",parm$seed[i],".RData"))
+                        parm$n[i],"_seed=",parm$seed[i],
+                       "_Q=",parm$Q[i],"_g=",parm$g[i],".RData"))
             out
         }, error=function(e){
-          c(parm$seed[i], parm$n[i], rep(NA,11))
+          rep(NA,13)
         })
         rslt <- rbind(rslt, tmp)
     }
     # format
     out <- data.frame(rslt)
-    colnames(out) <- c("seed","n","truth","drtmle","drtmle_cil","drtmle_ciu","drtmle_cov",
+    colnames(out) <- c("seed","n","truth","Q","g","drtmle","drtmle_cil","drtmle_ciu","drtmle_cov",
                        "ltmle","ltmle_cil","ltmle_ciu","ltmle_cov")
+    out[,(1:ncol(out))[c(-4,-5)]] <- apply(out[,(1:ncol(out))[c(-4,-5)]], 2, as.numeric)
     save(out, file=paste0('~/drinf/out/allOut.RData'))
+
+    # post processing
+    getBias <- function(out, n, Q, g){
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
+      bias <- by(rslt, rslt$n, function(x){
+        bias_drtmle <- mean(x$drtmle - x$truth, na.rm = TRUE)
+        bias_ltmle <- mean(x$ltmle - x$truth, na.rm = TRUE)
+        c(bias_drtmle, bias_ltmle)
+      })
+      bias
+    }
+    getBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
+    getBias(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
+    getBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+
+    getRootNBias <- function(out, n, Q, g){
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
+      rootn_bias <- by(rslt, rslt$n, function(x){
+        bias_drtmle <- sqrt(x$n[1])*mean(x$drtmle - x$truth, na.rm = TRUE)
+        bias_ltmle <- sqrt(x$n[1])*mean(x$ltmle - x$truth, na.rm = TRUE)
+        c(bias_drtmle, bias_ltmle)
+      })
+      rootn_bias
+    }
+    getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
+    getRootNBias(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
+    getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+
+    getCov <- function(out, n, Q, g){
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
+      cov <-  by(rslt, rslt$n, function(x){
+        cov_drtmle <- mean(x$drtmle_cov, na.rm = TRUE)
+        cov_ltmle <- mean(x$ltmle_cov, na.rm = TRUE)
+        c(cov_drtmle, cov_ltmle)
+      })
+      cov
+    }
+    getCov(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
+    getCov(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
+    getCov(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+
+
+
+
 }
