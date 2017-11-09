@@ -11,7 +11,8 @@ SL.hal9001 <- function(Y, X, newX, family, obsWeights, ...){
         out <- list(fit = list(object = hal_out, m = mean(Y)), 
                     pred = pred)
     }else{
-        hal_out <- fit_hal(Y = Y, X = as.matrix(X)[,!dropCol], yolo = FALSE)
+        hal_out <- fit_hal(Y = Y, X = as.matrix(X)[,!dropCol], yolo = FALSE,
+                           fit_type = "glmnet")
         pred <- predict(hal_out, new_data = as.matrix(newX)[,!dropCol])
         out <- list(fit = list(object = hal_out, dropCol = dropCol), pred = pred)
     }

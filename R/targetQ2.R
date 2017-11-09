@@ -100,7 +100,7 @@ targetQ2 <- function(
             newdata = data.frame(out = 0, fo = flucOff,
                                  fc1 = predCov2),
             type = "response"
-        )*(L2.max - L2.min) + L2.min
+        )
     }else{
         # use optim to try the minimization along intercept only submodel if glm 
         # looks wonky
@@ -111,7 +111,7 @@ targetQ2 <- function(
             Y = L2s, offset = flucOff, weight = flucCov2
         )
         epsilon <- flucmod2$par
-        tmp <- plogis(flucOff +  epsilon)*(L2.max - L2.min) + L2.min
+        tmp <- plogis(flucOff +  epsilon)
     }
     
     # new offset 
@@ -134,7 +134,7 @@ targetQ2 <- function(
             newdata = data.frame(out = 0, fo = flucOff,
                                  fc1 = predCov1),
             type = "response"
-        )
+        )*(L2.max - L2.min) + L2.min
     }else{
         # use optim to try the minimization along submodel if glm 
         # looks wonky
@@ -145,7 +145,7 @@ targetQ2 <- function(
                 Y = L2s, offset = flucOff, weight = flucCov1
             )
         epsilon <- flucmod1$par
-        Q2nstar <- plogis(flucOff + predCov1 * epsilon)
+        Q2nstar <- plogis(flucOff + predCov1 * epsilon)*(L2.max - L2.min) + L2.min
     }
 
     #--------------
