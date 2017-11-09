@@ -34,6 +34,7 @@ library(hal9001, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.
 library(SuperLearner)
 library(methods)
 
+
 # get the list size #########
 if (args[1] == 'listsize') {
   cat(nrow(parm))
@@ -75,13 +76,15 @@ if (args[1] == 'run') {
     abar = c(1,1), 
     SL.Q = parm$Q[i],
     SL.g = parm$g[i], 
-    SL.Qr = "SL.hal9001",
-    SL.gr = "SL.hal9001",
+    SL.Qr = "SL.glm3",
+    SL.gr = "SL.glm3",
+    universal = TRUE, 
+    universalStepSize = 1e-5,
     flucOrd = c("targetg0","targetg1","redReg",
-               "targetQ2","targetQ1","redReg"),
+               "targetQ2","targetQ1"),
     return.models = FALSE,
     verbose = TRUE,
-    maxIter = 10,
+    maxIter = 0,
     return.ltmle = TRUE,
     allatonce = FALSE,
     tolg = 1e-2,
@@ -189,14 +192,16 @@ if (args[1] == 'merge') {
     getCov(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
     getCov(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
 
-    getMeanIC <- function(out, n, Q, g){
+    getIC <- function(out, n, Q, g){
       rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
-      cov <-  by(rslt, rslt$n, function(x){
-        cov_drtmle <- mean(x$drtmle_cov, na.rm = TRUE)
-        cov_ltmle <- mean(x$ltmle_cov, na.rm = TRUE)
-        c(cov_drtmle, cov_ltmle)
+      ic <-  by(rslt, rslt$n, function(x){
+        colMeans(x[ , grepl("IC", colnames(x))])
       })
-      cov
+      ic
     }
+    getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
+    getIC(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
+    getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+
 
 }

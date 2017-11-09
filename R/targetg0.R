@@ -12,6 +12,7 @@
 #' that is of interest. 
 #' @param tolg A \code{numeric} indicating the truncation level for conditional treatment probabilities. 
 #' @param tolQ A \code{numeric}
+#' @param method A character either "covariate" or "weight"
 #' @param return.models  A \code{boolean} indicating whether the fluctuation model should be 
 #' returned with the output.  
 #' @importFrom SuperLearner trimLogit
@@ -22,7 +23,7 @@
 
 targetg0 <- function(
     A0, A1, L2, Qn, gn, Qnr.gnr, 
-    abar, tolg, tolQ, return.models,tol.coef=1e1, ...
+    abar, tolg, tolQ, return.models,tol.coef=1e1, method = "weight",...
 ){
     #-------------------------------------------
     # making outcomes for logistic fluctuation
@@ -56,33 +57,39 @@ targetg0 <- function(
     #-------------------------------------------
     # fitting fluctuation submodel
     #-------------------------------------------
+    flucmod <- list(coefficients = Inf)
     # first fluctuation submodel to solve original equations
-    flucmod <- suppressWarnings(glm(
-        formula = "out ~ -1 + offset(fo) + fc1",
-        data = data.frame(out = as.numeric(A0==abar[1]), fo = flucOff, 
-                          fc1 = flucCov1),
-        family = binomial(), start = 0
-    ))
+    if(method == "covariate"){
+        flucmod <- suppressWarnings(glm(
+            formula = "out ~ -1 + offset(fo) + fc1",
+            data = data.frame(out = as.numeric(A0==abar[1]), fo = flucOff, 
+                              fc1 = flucCov1),
+            family = binomial(), start = 0
+        ))
 
-    if(abs(flucmod$coefficients) < tol.coef){
-        # get predictions 
-        g0nstar <- predict(
-            flucmod, 
-            newdata = data.frame(out = 0, fo = flucOff,
-                                 fc1 = predCov1),
-            type = "response"
-        )
-    }else{
+        if(abs(flucmod$coefficients) < tol.coef){
+            # get predictions 
+            g0nstar <- predict(
+                flucmod, 
+                newdata = data.frame(out = 0, fo = flucOff,
+                                     fc1 = predCov1),
+                type = "response"
+            )
+        }
+    }
+
+    if(method == "weight" | abs(flucmod$coefficients) >= tol.coef){
         # use optim to try the minimization along intercept only submodel if glm 
         # looks wonky
         flucmod <- optim(
             par = 0, fn = wnegloglik, gr = gradient.wnegloglik,
-            method = "L-BFGS-B", lower = -100, upper = 100,
+            method = "L-BFGS-B", lower = -tol.coef, upper = tol.coef,
             control = list(maxit = 10000),
-            Y = as.numeric(A0==abar[1]), offset = flucOff, weight = flucCov1
+            Y = (as.numeric(A0==abar[1]) - tolg)/(1 - 2*tolg), 
+            offset = flucOff, weight = flucCov1
         )
         epsilon <- flucmod$par
-        g0nstar <- plogis(flucOff +  epsilon)
+        g0nstar <- plogis(flucOff +  epsilon)*(1 - 2*tolg) + tolg
     }    
  
     #--------------
