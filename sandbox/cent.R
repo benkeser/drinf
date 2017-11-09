@@ -41,12 +41,12 @@ if (args[1] == 'listsize') {
 
 # execute prepare job ##################
 if (args[1] == 'prepare') {
-  # for(i in 1:nrow(parm)){
-  #    set.seed(parm$seed[i])
-  #    dat <- makeData(n=parm$n[i])
-  #    save(dat, file=paste0("~/drinf/scratch/dataList_n=",parm$n[i],
-  #                          "_seed=",parm$seed[i],".RData"))
-  #  }
+  for(i in 1:nrow(parm)){
+     set.seed(parm$seed[i])
+     dat <- makeData(n=parm$n[i])
+     save(dat, file=paste0("~/drinf/scratch/dataList_n=",parm$n[i],
+                           "_seed=",parm$seed[i],".RData"))
+   }
    print(paste0('initial datasets saved to: ~/drinf/scratch/dataList ... .RData'))
 }
 
@@ -79,16 +79,15 @@ if (args[1] == 'run') {
     SL.gr = "SL.hal9001",
     flucOrd = c("targetg0","targetg1","redReg",
                "targetQ2","targetQ1","redReg"),
-    universal = FALSE,
-    universalStepSize = 1e-4,  
     return.models = FALSE,
     verbose = TRUE,
-    maxIter = 3,
+    maxIter = 10,
     return.ltmle = TRUE,
     allatonce = FALSE,
     tolg = 1e-2,
-    tolQ = 1e-2
+    tolQ = 1e-2, stratify = TRUE
     )
+
     drtmle_ci <- rep(object$est,2) + c(-1.96, 1.96) * rep(object$se,2)
     ltmle_ci <- rep(object$est.ltmle,2) + c(-1.96, 1.96) * rep(object$se.ltmle,2)
 
@@ -98,21 +97,24 @@ if (args[1] == 'run') {
     # seed, n, truth
     # drtmle est, ci, coverage
     # ltmle est, ci, coverage 
+    # drtmle iterations
+    # drtmle meanIC
     out <- c(parm$seed[i], parm$n[i], truth, 
              parm$Q[i], parm$g[i],
              object$est, drtmle_ci,
              as.numeric(drtmle_ci[1] < truth & drtmle_ci[2] > truth),
              object$est.ltmle, ltmle_ci,
-             as.numeric(ltmle_ci[1] < truth & ltmle_ci[2] > truth))
+             as.numeric(ltmle_ci[1] < truth & ltmle_ci[2] > truth),
+             object$iter, unlist(object$ic))
 
     # save output 
-    save(out, file = paste0("~/drinf/scratch/out_n=",
+    save(out, file = paste0("~/drinf/out/out_n=",
                             parm$n[i],"_seed=",parm$seed[i],
                             "_Q=",parm$Q[i],"_g=",parm$g[i],".RData.tmp"))
-    file.rename(paste0("~/drinf/scratch/out_n=",
+    file.rename(paste0("~/drinf/out/out_n=",
                        parm$n[i],"_seed=",parm$seed[i],
                        "_Q=",parm$Q[i],"_g=",parm$g[i],".RData.tmp"),
-                paste0("~/drinf/scratch/out_n=",
+                paste0("~/drinf/out/out_n=",
                        parm$n[i],"_seed=",parm$seed[i],
                        "_Q=",parm$Q[i],"_g=",parm$g[i],".RData"))
   }
@@ -130,19 +132,20 @@ if (args[1] == 'merge') {
     rslt <- NULL
     for(i in 1:nrow(parm)){
         tmp <- tryCatch({
-            load(paste0("~/drinf/scratch/out_n=",
+            load(paste0("~/drinf/out/out_n=",
                         parm$n[i],"_seed=",parm$seed[i],
                        "_Q=",parm$Q[i],"_g=",parm$g[i],".RData"))
             out
         }, error=function(e){
-          rep(NA,13)
+          rep(NA,17)
         })
         rslt <- rbind(rslt, tmp)
     }
     # format
     out <- data.frame(rslt)
     colnames(out) <- c("seed","n","truth","Q","g","drtmle","drtmle_cil","drtmle_ciu","drtmle_cov",
-                       "ltmle","ltmle_cil","ltmle_ciu","ltmle_cov")
+                       "ltmle","ltmle_cil","ltmle_ciu","ltmle_cov","drtmle_iter",
+                       "origIC","missQIC","missgIC")
     out[,(1:ncol(out))[c(-4,-5)]] <- apply(out[,(1:ncol(out))[c(-4,-5)]], 2, as.numeric)
     save(out, file=paste0('~/drinf/out/allOut.RData'))
 
@@ -152,7 +155,7 @@ if (args[1] == 'merge') {
       bias <- by(rslt, rslt$n, function(x){
         bias_drtmle <- mean(x$drtmle - x$truth, na.rm = TRUE)
         bias_ltmle <- mean(x$ltmle - x$truth, na.rm = TRUE)
-        c(bias_drtmle, bias_ltmle)
+        c(nrow(x), bias_drtmle, bias_ltmle)
       })
       bias
     }
@@ -165,7 +168,7 @@ if (args[1] == 'merge') {
       rootn_bias <- by(rslt, rslt$n, function(x){
         bias_drtmle <- sqrt(x$n[1])*mean(x$drtmle - x$truth, na.rm = TRUE)
         bias_ltmle <- sqrt(x$n[1])*mean(x$ltmle - x$truth, na.rm = TRUE)
-        c(bias_drtmle, bias_ltmle)
+        c(nrow(x), bias_drtmle, bias_ltmle)
       })
       rootn_bias
     }
@@ -186,7 +189,14 @@ if (args[1] == 'merge') {
     getCov(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
     getCov(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
 
-
-
+    getMeanIC <- function(out, n, Q, g){
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
+      cov <-  by(rslt, rslt$n, function(x){
+        cov_drtmle <- mean(x$drtmle_cov, na.rm = TRUE)
+        cov_ltmle <- mean(x$ltmle_cov, na.rm = TRUE)
+        c(cov_drtmle, cov_ltmle)
+      })
+      cov
+    }
 
 }

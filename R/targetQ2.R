@@ -84,39 +84,6 @@ targetQ2 <- function(
     #-------------------------------------------
     # fitting fluctuation submodel
     #-------------------------------------------
-    # first fluctuation submodel to solve original equations
-    flucmod1 <- suppressWarnings(glm(
-        formula = "out ~ -1 + offset(fo) + fc1",
-        data = data.frame(out = L2s, fo = flucOff, 
-                          fc1 = flucCov1),
-        family = binomial(), start = 0
-    ))
-    # see if the fluctuation coefficient is reasonable
-    if(abs(flucmod1$coefficients) < tol.coef){
-        # get predictions 
-        tmp <- predict(
-            flucmod1, 
-            newdata = data.frame(out = 0, fo = flucOff,
-                                 fc1 = predCov1),
-            type = "response"
-        )
-    }else{
-        # use optim to try the minimization along submodel if glm 
-        # looks wonky
-        flucmod1 <- optim(
-                par = 0, fn = offnegloglik, gr = gradient.offnegloglik,
-                method = "L-BFGS-B", lower = -tol.coef, upper = tol.coef,
-                control = list(maxit = 10000),
-                Y = L2s, offset = flucOff, weight = flucCov1
-            )
-        epsilon <- flucmod1$par
-        tmp <- plogis(flucOff + predCov1 * epsilon)
-    }
-    
-    # new offset 
-    flucOff <- c(
-        SuperLearner::trimLogit(tmp, trim = tolQ)
-    )
     # second fluctuation submodel to solve new equations
     flucmod2 <- suppressWarnings(glm(
         formula = "out ~ -1 + offset(fo) + fc1",
@@ -128,7 +95,7 @@ targetQ2 <- function(
     
     if(abs(flucmod2$coefficients) < tol.coef){
         # get predictions 
-        Q2nstar <- predict(
+        tmp <- predict(
             flucmod2, 
             newdata = data.frame(out = 0, fo = flucOff,
                                  fc1 = predCov2),
@@ -144,10 +111,43 @@ targetQ2 <- function(
             Y = L2s, offset = flucOff, weight = flucCov2
         )
         epsilon <- flucmod2$par
-        Q2nstar <- plogis(flucOff +  epsilon)*(L2.max - L2.min) + L2.min
-    }    
+        tmp <- plogis(flucOff +  epsilon)*(L2.max - L2.min) + L2.min
+    }
     
+    # new offset 
+    flucOff <- c(
+        SuperLearner::trimLogit(tmp, trim = tolQ)
+    )
     
+    # first fluctuation submodel to solve original equations
+    flucmod1 <- suppressWarnings(glm(
+        formula = "out ~ -1 + offset(fo) + fc1",
+        data = data.frame(out = L2s, fo = flucOff, 
+                          fc1 = flucCov1),
+        family = binomial(), start = 0
+    ))
+    # see if the fluctuation coefficient is reasonable
+    if(abs(flucmod1$coefficients) < tol.coef){
+        # get predictions 
+        Q2nstar <- predict(
+            flucmod1, 
+            newdata = data.frame(out = 0, fo = flucOff,
+                                 fc1 = predCov1),
+            type = "response"
+        )
+    }else{
+        # use optim to try the minimization along submodel if glm 
+        # looks wonky
+        flucmod1 <- optim(
+                par = 0, fn = offnegloglik, gr = gradient.offnegloglik,
+                method = "L-BFGS-B", lower = -tol.coef, upper = tol.coef,
+                control = list(maxit = 10000),
+                Y = L2s, offset = flucOff, weight = flucCov1
+            )
+        epsilon <- flucmod1$par
+        Q2nstar <- plogis(flucOff + predCov1 * epsilon)
+    }
+
     #--------------
     # output 
     #-------------

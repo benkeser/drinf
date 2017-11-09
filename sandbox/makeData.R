@@ -1,14 +1,18 @@
 SL.hal9001 <- function(Y, X, newX, family, obsWeights, ...){
     # get rid of non-unique X columns
-    dropCol <- apply(X, 2, function(x){ length(unique(X)) == 1})
+    if(dim(X)[2] > 1){
+        dropCol <- apply(X, 2, function(x){ length(unique(X)) == 1})
+    }else{
+        dropCol <- length(unique(X[,1])) == 1
+    }
     if(all(dropCol)){
         hal_out <- "all columns of X the same"
         pred <- rep(mean(Y), nrow(newX))
         out <- list(fit = list(object = hal_out, m = mean(Y)), 
                     pred = pred)
     }else{
-        hal_out <- fit_hal(Y = Y, X = as.matrix(X)[,!dropCol])
-        pred <- predict(hal_out, newdata = as.matrix(newX)[,!dropCol])
+        hal_out <- fit_hal(Y = Y, X = as.matrix(X)[,!dropCol], yolo = FALSE)
+        pred <- predict(hal_out, new_data = as.matrix(newX)[,!dropCol])
         out <- list(fit = list(object = hal_out, dropCol = dropCol), pred = pred)
     }
     class(out$fit) <- "SL.hal9001"
@@ -17,7 +21,7 @@ SL.hal9001 <- function(Y, X, newX, family, obsWeights, ...){
 
 predict.SL.hal9001 <- function(object, newdata, ...){
     if(!class(object$object) == "character"){
-        return(predict(object$object, newdata = as.matrix(newdata)[,!object$dropCol]))        
+        return(predict(object$object, new_data = as.matrix(newdata)[,!object$dropCol]))        
     }else{
         return(rep(object$m, nrow(newdata)))
     }
