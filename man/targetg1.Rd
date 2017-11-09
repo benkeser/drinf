@@ -5,7 +5,7 @@
 \title{targetg1}
 \usage{
 targetg1(A0, A1, L2, Qn, gn, Qnr.gnr, abar, tolg, tolQ, return.models,
-  tol.coef = 10, method = "weight", ...)
+  tol.coef = 10, method = "scaled", ...)
 }
 \arguments{
 \item{A0}{A \code{vector} treatment delivered at baseline.}
@@ -30,7 +30,7 @@ that is of interest.}
 \item{return.models}{A \code{boolean} indicating whether the fluctuation model should be 
 returned with the output.}
 
-\item{method}{A character either "covariate" or "weight"}
+\item{method}{A character "scaled" or other}
 }
 \value{
 A list with named entries corresponding to the estimators of the 

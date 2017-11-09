@@ -5,7 +5,7 @@
 \title{targetg0}
 \usage{
 targetg0(A0, A1, L2, Qn, gn, Qnr.gnr, abar, tolg, tolQ, return.models,
-  tol.coef = 10, method = "weight", ...)
+  tol.coef = 10, method = "scaled", ...)
 }
 \arguments{
 \item{A0}{A \code{vector} treatment delivered at baseline.}

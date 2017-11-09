@@ -23,7 +23,7 @@
 
 targetg0 <- function(
     A0, A1, L2, Qn, gn, Qnr.gnr, 
-    abar, tolg, tolQ, return.models,tol.coef=1e1, method = "weight",...
+    abar, tolg, tolQ, return.models,tol.coef=1e1, method = "scaled",...
 ){
     #-------------------------------------------
     # making outcomes for logistic fluctuation
@@ -57,9 +57,8 @@ targetg0 <- function(
     #-------------------------------------------
     # fitting fluctuation submodel
     #-------------------------------------------
-    flucmod <- list(coefficients = Inf)
     # first fluctuation submodel to solve original equations
-    if(method == "covariate"){
+    if(method != "scaled"){
         flucmod <- suppressWarnings(glm(
             formula = "out ~ -1 + offset(fo) + fc1",
             data = data.frame(out = as.numeric(A0==abar[1]), fo = flucOff, 
@@ -75,21 +74,20 @@ targetg0 <- function(
                                      fc1 = predCov1),
                 type = "response"
             )
+        }else{
+            g0nstar <- g0n
         }
-    }
-
-    if(method == "weight" | abs(flucmod$coefficients) >= tol.coef){
-        # use optim to try the minimization along intercept only submodel if glm 
-        # looks wonky
+    }else{
+        # use optim to perform minimization along intercept only submodel if glm
         flucmod <- optim(
-            par = 0, fn = wnegloglik, gr = gradient.wnegloglik,
+            par = 0, fn = offnegloglik, gr = gradient.offnegloglik,
             method = "L-BFGS-B", lower = -tol.coef, upper = tol.coef,
             control = list(maxit = 10000),
             Y = (as.numeric(A0==abar[1]) - tolg)/(1 - 2*tolg), 
             offset = flucOff, weight = flucCov1
         )
         epsilon <- flucmod$par
-        g0nstar <- plogis(flucOff +  epsilon)*(1 - 2*tolg) + tolg
+        g0nstar <- plogis(flucOff +  epsilon * flucCov1)*(1 - 2*tolg) + tolg
     }    
  
     #--------------

@@ -3,31 +3,39 @@ source("~/Dropbox/R/drinf/sandbox/makeData.R")
 library(drinf)
 library(SuperLearner)
 library(hal9001)
-dat <- makeData(n = 5000)
+set.seed(1234124)
+dat <- makeData(n = 10000)
 
-# set seed
-set.seed(1234)
+do.one <- function(){
+	dat <- makeData(n = 5000)
 
-# faster to call mean.tmle
-object <- drinf.tmle(
-L0 = dat$L0, L1 = dat$L1, L2 = dat$L2, A0 = dat$A0, A1 = dat$A1, 
-abar = c(1,1), 
-SL.Q = "SL.hal9001",
-SL.g = "SL.glm", 
-SL.Qr = "SL.glm3",
-SL.gr = "SL.glm3",
-# universal = TRUE, 
-# universalStepSize = 1e-5,
-flucOrd = c("targetg0","targetg1","redReg",
-           "targetQ2","targetQ1"),
-return.models = FALSE,
-verbose = TRUE,
-maxIter = 0,
-return.ltmle = TRUE,
-allatonce = FALSE,
-tolg = 1e-2,
-tolQ = 1e-2, stratify = TRUE
-)
+	# faster to call mean.tmle
+	# debug(drinf.tmle)
+	object <- drinf.tmle(
+	L0 = dat$L0, L1 = dat$L1, L2 = dat$L2, A0 = dat$A0, A1 = dat$A1, 
+	abar = c(1,1), 
+	SL.Q = "SL.hal9001",
+	SL.g = "SL.glm", 
+	SL.Qr = "SL.glm3",
+	SL.gr = "SL.glm3",
+	# universal = TRUE, 
+	# universalStepSize = 1e-5,
+	flucOrd = c("targetg0","targetg1","redReg",
+	           "targetQ2","targetQ1"),
+	return.models = FALSE,
+	verbose = TRUE,
+	maxIter = 0,
+	return.ltmle = TRUE,
+	allatonce = FALSE,
+	tolg = 1e-2,
+	tolQ = 1e-2, stratify = TRUE
+	)
+	c(object$est, object$est.ltmle)
+}
+
+rslt <- replicate(50, do.one())
+
+
 
 # visualizing g misspecification
 debug(drinf:::estimateG)
@@ -104,6 +112,5 @@ plot(y = A0/g0nr * h0nr, x = Q2n, col = "gray90")
 lines(pred ~ Q_seq, type = "l")
 
 
-
-
-
+# checking g0n vs. g0nstar fit
+plot(gnstar$g0n ~ gn$g0n)

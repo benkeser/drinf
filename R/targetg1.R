@@ -12,7 +12,7 @@
 #' that is of interest. 
 #' @param tolg A \code{numeric} indicating the truncation level for conditional treatment probabilities. 
 #' @param tolQ A \code{numeric}
-#' @param method A character either "covariate" or "weight"
+#' @param method A character "scaled" or other
 #' @param return.models  A \code{boolean} indicating whether the fluctuation model should be 
 #' returned with the output.  
 #' @importFrom SuperLearner trimLogit
@@ -23,7 +23,7 @@
 
 targetg1 <- function(
     A0, A1, L2, Qn, gn, Qnr.gnr, 
-    abar, tolg, tolQ, return.models,tol.coef=1e1, method = "weight", ...
+    abar, tolg, tolQ, return.models,tol.coef=1e1, method = "scaled", ...
 ){
     #-------------------------------------------
     # making outcomes for logistic fluctuation
@@ -58,9 +58,7 @@ targetg1 <- function(
     # fitting fluctuation submodel
     #-------------------------------------------
     # first fluctuation submodel to solve original equations
-    flucmod <- list(coefficients = Inf)
-
-    if(method == "covariate"){
+    if(method != "scaled"){
         flucmod <- suppressWarnings(glm(
             formula = "out ~ -1 + offset(fo) + fc1",
             data = data.frame(out = as.numeric(A1==abar[1]), fo = flucOff, 
@@ -77,23 +75,22 @@ targetg1 <- function(
                                      fc1 = predCov1),
                 type = "response"
             )
+        }else{
+            g1nstar <- g1n
         }
-    }
-
-    if(method == "weight" | abs(flucmod$coefficients) >= tol.coef){
-        # use optim to try the minimization along intercept only submodel if glm 
-        # looks wonky
+    }else{
+        # use optim to perform minimization along intercept only submodel if glm
         flucmod <- optim(
-            par = 0, fn = wnegloglik, gr = gradient.wnegloglik,
+            par = 0, fn = offnegloglik, gr = gradient.offnegloglik,
             method = "L-BFGS-B", lower = -tol.coef, upper = tol.coef,
             control = list(maxit = 10000),
             Y = (as.numeric(A1==abar[2]) - tolg)/(1 - 2*tolg), 
             offset = flucOff, weight = flucCov1
         )
         epsilon <- flucmod$par
-        g1nstar <- plogis(flucOff +  epsilon)*(1 - 2*tolg) + tolg
-    }   
-
+        g1nstar <- plogis(flucOff +  epsilon * flucCov1)*(1 - 2*tolg) + tolg
+    }    
+ 
     #--------------
     # output 
     #-------------

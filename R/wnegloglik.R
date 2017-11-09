@@ -32,8 +32,8 @@ offnegloglik <- function(epsilon, weight, Y, offset){
     mu <- plogis(X%*%as.matrix(c(1,epsilon)))
     mu[mu == 0] <- .Machine$double.neg.eps
     mu[mu == 1] <- 1 - .Machine$double.neg.eps
-    ologlik <- sum(weight * (Y * log(mu) + (1-Y)*log(1-mu)))
-    return(-ologlik)
+    ologlik <- sum((Y * log(mu) + (1-Y)*log(1-mu)))
+    return(-ologlik)    
 }
 
 gradient.offnegloglik <- function(epsilon, weight, Y, offset){

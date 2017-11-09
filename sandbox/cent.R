@@ -25,7 +25,9 @@ Q <- c("SL.hal9001","SL.glm")
 parm <- expand.grid(seed=1:bigB,
                     n=ns, g = g, Q = Q, stringsAsFactors = FALSE)
 
-parm <- parm[!(parm$g == "SL.glm" & parm$Q == "SL.glm"),]
+parm$g[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
+parm$Q[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
+
 # source in simulation Functions
 source("~/drinf/makeData.R")
 # load drinf
@@ -76,10 +78,10 @@ if (args[1] == 'run') {
     abar = c(1,1), 
     SL.Q = parm$Q[i],
     SL.g = parm$g[i], 
-    SL.Qr = "SL.glm3",
-    SL.gr = "SL.glm3",
-    universal = TRUE, 
-    universalStepSize = 1e-5,
+    SL.Qr = "SL.gam",
+    SL.gr = "SL.gam",
+    # universal = TRUE, 
+    # universalStepSize = 1e-5,
     flucOrd = c("targetg0","targetg1","redReg",
                "targetQ2","targetQ1"),
     return.models = FALSE,
@@ -95,7 +97,7 @@ if (args[1] == 'run') {
     ltmle_ci <- rep(object$est.ltmle,2) + c(-1.96, 1.96) * rep(object$se.ltmle,2)
 
     # computed locally
-    truth <- 1.16667    
+    truth <- 2.700148    
     # output should look like 
     # seed, n, truth
     # drtmle est, ci, coverage
@@ -131,7 +133,10 @@ if (args[1] == 'merge') {
     Q <- c("SL.hal9001","SL.glm")
     parm <- expand.grid(seed=1:bigB,
                         n=ns, g = g, Q = Q, stringsAsFactors = FALSE)
-    parm <- parm[!(parm$g == "SL.glm" & parm$Q == "SL.glm"),]
+
+    parm$g[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
+    parm$Q[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
+
     rslt <- NULL
     for(i in 1:nrow(parm)){
         tmp <- tryCatch({
