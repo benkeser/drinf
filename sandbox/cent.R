@@ -83,10 +83,10 @@ if (args[1] == 'run') {
     # universal = TRUE, 
     # universalStepSize = 1e-5,
     flucOrd = c("targetg0","targetg1","redReg",
-               "targetQ2","targetQ1"),
+               "targetQ2","targetQ1","redReg"),
     return.models = FALSE,
     verbose = TRUE,
-    maxIter = 0,
+    maxIter = 10,
     return.ltmle = TRUE,
     allatonce = FALSE,
     tolg = 1e-2,
@@ -107,6 +107,7 @@ if (args[1] == 'run') {
     out <- c(parm$seed[i], parm$n[i], truth, 
              parm$Q[i], parm$g[i],
              object$est, drtmle_ci,
+             object$est_trace, # tmles with maxIter 1:10
              as.numeric(drtmle_ci[1] < truth & drtmle_ci[2] > truth),
              object$est.ltmle, ltmle_ci,
              as.numeric(ltmle_ci[1] < truth & ltmle_ci[2] > truth),
@@ -145,13 +146,15 @@ if (args[1] == 'merge') {
                        "_Q=",parm$Q[i],"_g=",parm$g[i],".RData"))
             out
         }, error=function(e){
-          rep(NA,17)
+          rep(NA,17 + 10)
         })
         rslt <- rbind(rslt, tmp)
     }
     # format
     out <- data.frame(rslt)
-    colnames(out) <- c("seed","n","truth","Q","g","drtmle","drtmle_cil","drtmle_ciu","drtmle_cov",
+    colnames(out) <- c("seed","n","truth","Q","g","drtmle",
+                       paste0("drtmle_maxIter",1:10),
+                       "drtmle_cil","drtmle_ciu","drtmle_cov",
                        "ltmle","ltmle_cil","ltmle_ciu","ltmle_cov","drtmle_iter",
                        "origIC","missQIC","missgIC")
     out[,(1:ncol(out))[c(-4,-5)]] <- apply(out[,(1:ncol(out))[c(-4,-5)]], 2, as.numeric)

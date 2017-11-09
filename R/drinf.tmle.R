@@ -137,6 +137,8 @@ drinf.tmle <- function(L0, L1, L2,
         # favorable models
         #----------------------------------------
         
+        # set up an empty vector of estimates
+        psin_trace <- rep(NA, maxIter)
         #----------------------------------------
         # target Q and g according to flucOrd
         #----------------------------------------
@@ -214,6 +216,8 @@ drinf.tmle <- function(L0, L1, L2,
         # targeting loop for dr inference
         #-----------------------------------
         iter <- 1
+        psin_trace[iter] <- mean(Qnstar$Q1n)
+
         while(max(abs(meanif.dr)) > tolIF & iter < maxIter){
             #-----------------------------------------
             # compute reduced dimension regressions
@@ -282,6 +286,8 @@ drinf.tmle <- function(L0, L1, L2,
 
             # update iteration
             iter <- iter + 1
+            psin_trace[iter] <- mean(Qnstar$Q1n)
+
             cat(#"\n epsilon = ", etastar$flucmod$coefficients[1],
                 "\n mean ic = ", meanif.dr, 
                  "\n")
@@ -453,8 +459,15 @@ drinf.tmle <- function(L0, L1, L2,
     
     # dr tmle output
     out$est <- psin
-    out$se <- se
-    
+    out$se <- as.numeric(se)
+
+    # replace NA's in psin_trace
+    n_notNA_psin_trace <- sum(!is.na(psin_trace))
+    if(n_notNA_psin_trace < length(psin_trace)){
+        psin_trace[(n_notNA_psin_trace+1):length(psin_trace)] <- psin_trace[n_notNA_psin_trace]
+    }
+
+    out$est_trace <- psin_trace
     # ltmle output
     out$est.ltmle <- NULL
     out$se.ltmle <- NULL

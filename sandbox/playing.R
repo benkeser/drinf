@@ -14,7 +14,7 @@ do.one <- function(){
 	object <- drinf.tmle(
 	L0 = dat$L0, L1 = dat$L1, L2 = dat$L2, A0 = dat$A0, A1 = dat$A1, 
 	abar = c(1,1), 
-	SL.Q = "SL.hal9001",
+	SL.Q = "SL.earth",
 	SL.g = "SL.glm", 
 	SL.Qr = "SL.glm3",
 	SL.gr = "SL.glm3",
@@ -24,7 +24,7 @@ do.one <- function(){
 	           "targetQ2","targetQ1"),
 	return.models = FALSE,
 	verbose = TRUE,
-	maxIter = 0,
+	maxIter = 10,
 	return.ltmle = TRUE,
 	allatonce = FALSE,
 	tolg = 1e-2,
