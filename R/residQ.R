@@ -19,11 +19,13 @@
 residQ <- function(
     L2, A0, A1, Q2n, Q1n, g0n, g1n, abar, ...
 ){	
-	# Was getting rid of g0n and g1n here the right thing to do?
-    rQ1 <- as.numeric(A0 == abar[1] & A1 == abar[2]) / (g1n) * (L2 - Q2n) + 
-        as.numeric(A0 == abar[1]) * (Q2n - Q1n)
+	# These two residuals are regressed on g0n
+    rQ1_1 <- as.numeric(A0 == abar[1]) * (Q2n - Q1n)
+    rQ1_2 <- as.numeric(A0 == abar[1] & A1 == abar[2])  / (g1n) * (L2 - Q2n)
+
+    # This residual is regressed on g1n
     rQ2 <- as.numeric(A0 == abar[1] & A1 == abar[2])  / (g0n) * (L2 - Q2n)
     return(list(
-        rQ1 = rQ1, rQ2 = rQ2
+        rQ1_1 = rQ1_1, rQ1_2 = rQ1_2, rQ2 = rQ2
     ))
 }

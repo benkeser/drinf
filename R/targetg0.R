@@ -32,33 +32,31 @@ targetg0 <- function(
     n <- length(gn$g0n)
     
     #-------------------------------------------
-    # making offsets for logistic fluctuation
-    #-------------------------------------------
-    flucOff <- c(
-        SuperLearner::trimLogit(gn$g0n, trim = tolg)
-    )
-    
-    #-------------------------------------------
     # making covariates for fluctuation
     #-------------------------------------------
-    # the "clever covariates" for g1n
+    # the "clever covariates" for g0n
     flucCov1 <- c(
-        Qnr.gnr$Qnr$Q1nr / gn$g0n^2
+        (Qnr.gnr$Qnr$Q1nr1 + Qnr.gnr$Qnr$Q1nr2) / gn$g0n^2
     )
     #-------------------------------------------
     # making covariates for prediction
     #-------------------------------------------
     # getting the values of the clever covariates evaluated at 
-    # \bar{A} = abar
-    predCov1 <- c(
-        Qnr.gnr$Qnr$Q1nr / gn$g0n^2 # no need to change this one
-    )
+    # \bar{A} = abar. 
+    # no need to change this one as it's not a function of A
+    predCov1 <- flucCov1 
     
     #-------------------------------------------
     # fitting fluctuation submodel
     #-------------------------------------------
-    # first fluctuation submodel to solve original equations
     if(method != "scaled"){
+        #-------------------------------------------
+        # making offsets for unscaled fluctuation
+        #-------------------------------------------
+        flucOff <- c(
+            SuperLearner::trimLogit(gn$g0n, trim = tolg)
+        )
+        
         flucmod <- suppressWarnings(glm(
             formula = "out ~ -1 + offset(fo) + fc1",
             data = data.frame(out = as.numeric(A0==abar[1]), fo = flucOff, 
@@ -78,7 +76,15 @@ targetg0 <- function(
             g0nstar <- g0n
         }
     }else{
-        # use optim to perform minimization along intercept only submodel if glm
+        #-------------------------------------------
+        # making offsets for scaled fluctuation
+        #-------------------------------------------
+        flucOff <- c(
+            SuperLearner::trimLogit((gn$g0n - tolg)/(1 - 2*tolg))
+        )
+
+        # use optim to perform minimization along submodel
+        # to ensure fluctuated estimates in (tolg, 1 - tolg)
         flucmod <- optim(
             par = 0, fn = offnegloglik, gr = gradient.offnegloglik,
             method = "L-BFGS-B", lower = -tol.coef, upper = tol.coef,
@@ -87,6 +93,7 @@ targetg0 <- function(
             offset = flucOff, weight = flucCov1
         )
         epsilon <- flucmod$par
+        # rescale predictions 
         g0nstar <- plogis(flucOff +  epsilon * flucCov1)*(1 - 2*tolg) + tolg
     }    
  

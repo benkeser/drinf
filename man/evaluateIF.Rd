@@ -4,8 +4,8 @@
 \alias{evaluateIF}
 \title{evaluateIF}
 \usage{
-evaluateIF(A0, A1, L2, Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q1nr, g0nr, g1nr, h0nr,
-  h1nr, hbarnr, abar)
+evaluateIF(A0, A1, L2, Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q1nr1, Q1nr2, g0nr, g1nr,
+  h0nr, h1nr, hbarnr, abar)
 }
 \arguments{
 \item{A0}{A \code{vector} treatment delivered at baseline.}
@@ -24,7 +24,9 @@ evaluateIF(A0, A1, L2, Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q1nr, g0nr, g1nr, h0nr,
 
 \item{Q2nr.obsa}{A \code{vector} of estimates of Q_{2,0}^r at the observed values of A0.}
 
-\item{Q1nr}{A \code{vector} of estimates of Q_{1,0}^r}
+\item{Q1nr1}{A \code{vector} of estimates of Q_{1,0,1}^r}
+
+\item{Q1nr2}{A \code{vector} of estimates of Q_{1,0,2}^r}
 
 \item{g0nr}{A \code{vector} of estimates of g_{0,0}^r}
 

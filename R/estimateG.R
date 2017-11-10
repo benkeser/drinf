@@ -65,6 +65,7 @@ estimateG <- function(
         }
         # replace small predictions with tolg
         g0n[g0n < tolg] <- tolg
+        g0n[g0n > 1 - tolg] <- 1 - tolg
         
         #-----------
         # g1n            
@@ -98,6 +99,7 @@ estimateG <- function(
         }
         # replace small predictions with tolg
         g1n[g1n < tolg] <- tolg
+        g1n[g1n > 1 - tolg] <- 1 - tolg
         # if only one learner specified, call it directly to avoid CV
     }
     # if SL.g == NULL then call glm
@@ -109,6 +111,7 @@ estimateG <- function(
                   data=L0, family=binomial())
         g0n <- predict(g0mod, type="response")
         g0n[g0n < tolg] <- tolg
+        g0n[g0n > 1 - tolg] <- 1 - tolg
         
         #-------
         # g1n 
@@ -129,6 +132,7 @@ estimateG <- function(
                    "data.frame(L0, L1, A0 = abar[1])"
             )))))
         g1n[g1n < tolg] <- tolg
+        g1n[g1n > 1 - tolg] <- 1 - tolg
     } # end glm call
     
     #-----------

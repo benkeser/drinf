@@ -4,11 +4,13 @@
 \alias{estimateQr}
 \title{estimateQr}
 \usage{
-estimateQr(rQ1, rQ2, g0n, g1n, A0, A1, SL.Qr, abar, return.models, verbose, ...)
+estimateQr(rQ1_1, rQ1_2, rQ2, g0n, g1n, A0, A1, SL.Qr, abar, return.models,
+  verbose, ...)
 }
 \arguments{
-\item{rQ1}{The "residual" for the first reduced dimension regression (on g0n), 
-equal to sum of the EIF at time 1 and 2.}
+\item{rQ1_1}{The "residual" for the first of two reduced-dimension regressions (on g0n).}
+
+\item{rQ1_2}{The "residual" for the second of two reduced-dimension regressions (on g0n).}
 
 \item{rQ2}{The "residual" for the second reduced dimension regression (on g1n),
 equal to the EIF at time 2.}

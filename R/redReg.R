@@ -23,7 +23,7 @@ redReg <- function(
     # estimate Qr regressions
     #---------------------------
     Qnr <- estimateQr(
-        rQ1 = rQ$rQ1, rQ2 = rQ$rQ2, g0n = gn$g0n, g1n = gn$g1n, 
+        rQ1_1 = rQ$rQ1_1, rQ1_2 = rQ$rQ1_2, rQ2 = rQ$rQ2, g0n = gn$g0n, g1n = gn$g1n, 
         A0 = A0, A1 = A1, SL.Qr = SL.Qr, abar = abar, 
         return.models = return.models, verbose = verbose, ...
     )

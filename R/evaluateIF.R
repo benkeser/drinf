@@ -10,7 +10,8 @@
 #' @param g1n A \code{vector} of estimates of g_{1,0}
 #' @param g0n A \code{vector} of estimates of g_{0,0}
 #' @param Q2nr.obsa A \code{vector} of estimates of Q_{2,0}^r at the observed values of A0.
-#' @param Q1nr A \code{vector} of estimates of Q_{1,0}^r
+#' @param Q1nr1 A \code{vector} of estimates of Q_{1,0,1}^r
+#' @param Q1nr2 A \code{vector} of estimates of Q_{1,0,2}^r
 #' @param g0nr A \code{vector} of estimates of g_{0,0}^r
 #' @param g1nr A \code{vector} of estimates of g_{0,0}^r
 #' @param h0nr A \code{vector} of estimates of h_{0,0}^r
@@ -23,7 +24,7 @@
 #' EIF at the nuisance parameter estimates evaluated at the observations. 
 
 evaluateIF <- function(
-    A0, A1, L2, Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q1nr, 
+    A0, A1, L2, Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q1nr1, Q1nr2,
     g0nr, g1nr, h0nr, h1nr, hbarnr, abar
 ){
     # usual pieces of the EIF
@@ -36,10 +37,10 @@ evaluateIF <- function(
     # targeting of g should knock these equations out
     #--------------------------------------------------
     # targeting of g1 to get rid of this one
-    Dg1.Q2 <- Q2nr.obsa / g1n * (as.numeric(A1 == abar[2]) - g1n)
+    Dg1.Q2 <- Q2nr.obsa / g1n^2 * (as.numeric(A1 == abar[2]) - g1n)
     
     # targeting of g0 to get rid of this one
-    Dg0.Q1 <- Q1nr / g0n * (as.numeric(A0 == abar[1]) - g0n)
+    Dg0.Q1 <- (Q1nr1 + Q1nr2) / g0n^2 * (as.numeric(A0 == abar[1]) - g0n)
     
     #--------------------------------------------------
     # pieces resulting from misspecification of g

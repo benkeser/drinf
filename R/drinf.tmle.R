@@ -197,7 +197,8 @@ drinf.tmle <- function(L0, L1, L2,
             A0 = A0, A1 = A1, L2 = L2, 
             Q2n = Qnstar$Q2n, Q1n = Qnstar$Q1n, 
             g1n = gnstar$g1n, g0n = gnstar$g0n, 
-            Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, Q1nr = Qnr.gnr$Qnr$Q1nr, 
+            Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, 
+            Q1nr1 = Qnr.gnr$Qnr$Q1nr1, Q1nr2 = Qnr.gnr$Qnr$Q1nr2, 
             g0nr = Qnr.gnr$gnr$g0nr, g1nr = Qnr.gnr$gnr$g1nr, 
             h0nr = Qnr.gnr$gnr$h0nr, h1nr = Qnr.gnr$gnr$h1nr, hbarnr = Qnr.gnr$gnr$hbarnr,
             abar = abar
@@ -269,7 +270,8 @@ drinf.tmle <- function(L0, L1, L2,
                 A0 = A0, A1 = A1, L2 = L2, 
                 Q2n = Qnstar$Q2n, Q1n = Qnstar$Q1n, 
                 g1n = gnstar$g1n, g0n = gnstar$g0n, 
-                Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, Q1nr = Qnr.gnr$Qnr$Q1nr, 
+                Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, 
+                Q1nr1 = Qnr.gnr$Qnr$Q1nr1, Q1nr2 = Qnr.gnr$Qnr$Q1nr2, 
                 g0nr = Qnr.gnr$gnr$g0nr, g1nr = Qnr.gnr$gnr$g1nr, 
                 h0nr = Qnr.gnr$gnr$h0nr, h1nr = Qnr.gnr$gnr$h1nr, hbarnr = Qnr.gnr$gnr$hbarnr,
                 abar = abar
@@ -332,20 +334,26 @@ drinf.tmle <- function(L0, L1, L2,
         #-------------------------
         if.dr <- evaluateIF(
             A0 = A0, A1 = A1, L2 = L2, Q2n = QnEps$Q2n, Q1n = QnEps$Q1n, 
-            g1n = gnEps$g1n, g0n = gnEps$g0n, Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, Q1nr = Qnr.gnr$Qnr$Q1nr, 
-            g0nr = Qnr.gnr$gnr$g0nr, g1nr = Qnr.gnr$gnr$g1nr, h0nr = Qnr.gnr$gnr$h0nr, h1nr = Qnr.gnr$gnr$h1nr, 
+            g1n = gnEps$g1n, g0n = gnEps$g0n, Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, 
+            Q1nr1 = Qnr.gnr$Qnr$Q1nr1, Q1nr2 = Qnr.gnr$Qnr$Q1nr2,
+            g0nr = Qnr.gnr$gnr$g0nr, g1nr = Qnr.gnr$gnr$g1nr, 
+            h0nr = Qnr.gnr$gnr$h0nr, h1nr = Qnr.gnr$gnr$h1nr, 
             hbarnr = Qnr.gnr$gnr$hbarnr, abar = abar
         )
         # P_n D*, P_n D_g, P_n D_Q
         PnDFull <- colMeans(Reduce("cbind",if.dr))
-        PnDQ2 <- matrix(c(PnDFull[3], PnDFull[6] + PnDFull[7]), ncol=1)
-        PnDQ1 <- matrix(c(PnDFull[2],PnDFull[8]))
-        PnDg0 <- matrix(PnDFull[5],ncol=1)
-        PnDg1 <- matrix(PnDFull[4],ncol=1)
+        PnDQ2 <- matrix(c(PnDFull[3], PnDFull[6] + PnDFull[7]), ncol = 1)
+        PnDQ1 <- matrix(c(PnDFull[2],PnDFull[8]), ncol = 1)
+        PnDg0 <- matrix(PnDFull[5], ncol = 1)
+        PnDg1 <- matrix(PnDFull[4], ncol = 1)
         # compute norm
         normPnD <- as.numeric(sqrt(sum(PnDQ2^2) + sum(PnDQ1^2) + PnDg0^2 + PnDg1^2))
         iter <- 0 
-        risk <- Inf; badSteps <- 0
+        all.risks <- evaluateRisk(L2 = L2, A0 = A0, A1 = A1, Q2n = QnEps$Q2n,
+                     Q1n = QnEps$Q1n, g1n = gnEps$g1n, g0n = gnEps$g0n,
+                     abar = abar, tolg = tolg)
+        risk <- all.risks$sum
+        badSteps <- 0
         # start taking steps
         while(normPnD > tolIF){
             iter <- iter + 1
@@ -372,26 +380,36 @@ drinf.tmle <- function(L0, L1, L2,
             #-------------------------
             if.dr <- evaluateIF(
                 A0 = A0, A1 = A1, L2 = L2, Q2n = QnEps$Q2n, Q1n = QnEps$Q1n, 
-                g1n = gnEps$g1n, g0n = gnEps$g0n, Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, Q1nr = Qnr.gnr$Qnr$Q1nr, 
-                g0nr = Qnr.gnr$gnr$g0nr, g1nr = Qnr.gnr$gnr$g1nr, h0nr = Qnr.gnr$gnr$h0nr, h1nr = Qnr.gnr$gnr$h1nr, 
+                g1n = gnEps$g1n, g0n = gnEps$g0n, Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, 
+                Q1nr1 = Qnr.gnr$Qnr$Q1nr1, Q1nr2 = Qnr.gnr$Qnr$Q1nr2, 
+                g0nr = Qnr.gnr$gnr$g0nr, g1nr = Qnr.gnr$gnr$g1nr, 
+                h0nr = Qnr.gnr$gnr$h0nr, h1nr = Qnr.gnr$gnr$h1nr, 
                 hbarnr = Qnr.gnr$gnr$hbarnr, abar = abar
             )
             PnDFull <- colMeans(Reduce("cbind",if.dr))
-            PnDQ2 <- matrix(c(PnDFull[3], PnDFull[6]+PnDFull[7]), ncol=1)
-            PnDQ1 <- matrix(c(PnDFull[2],PnDFull[8]))
-            PnDg0 <- matrix(PnDFull[5],ncol=1)
-            PnDg1 <- matrix(PnDFull[4],ncol=1)
+            PnDQ2 <- matrix(c(PnDFull[3], PnDFull[6]+PnDFull[7]), ncol = 1)
+            PnDQ1 <- matrix(c(PnDFull[2],PnDFull[8]), ncol = 1)
+            PnDg0 <- matrix(PnDFull[5], ncol = 1)
+            PnDg1 <- matrix(PnDFull[4], ncol = 1)
 
             # compute norm
             normPnD <- as.numeric(sqrt(sum(PnDQ2^2) + sum(PnDQ1^2) + PnDg0^2 + PnDg1^2))
         
             # compute empirical risk
-            tmp.risk <- evaluateRisk(L2=L2,A0=A0,A1=A1,Q2n=QnEps$Q2n,Q1n=QnEps$Q1n,g1n=gnEps$g1n,
-                g0n=gnEps$g0n,abar=abar)
-            warn <- tmp.risk > risk
-            risk <- tmp.risk
+            tmp.risk <- evaluateRisk(L2 = L2, A0 = A0, A1 = A1, Q2n = QnEps$Q2n,
+                                     Q1n = QnEps$Q1n, g1n = gnEps$g1n, g0n = gnEps$g0n,
+                                     abar = abar, tolg = tolg)
+            warn <- tmp.risk$sum > risk
+            if(warn){
+                diff <- mapply(t = tmp.risk, a = all.risks, function(t,a){
+                    a - t
+                })
+            }
+            risk <- tmp.risk$sum
+            all.risks <- tmp.risk 
             if(iter%%printFreq == 0){
-                cat("\n epsilon = ", iter*universalStepSize, "\n norm IC = ", normPnD, "\n risk = ", risk,"\n estimate = ", mean(QnEps$Q1n),"\n")
+                cat("\n epsilon = ", iter*universalStepSize, "\n norm IC = ", normPnD, 
+                    "\n risk = ", risk,"\n estimate = ", mean(QnEps$Q1n),"\n")
                 if(warn){
                     cat("!!! WARNING - INCREASING RISK !!!")
                     badSteps <- badSteps + 1
@@ -399,7 +417,7 @@ drinf.tmle <- function(L0, L1, L2,
             }
         } # end while loop
         # assign values at approximate MLE to Qnstar and gnstar
-        Qnstar = QnEps; gnstar = gnEps 
+        Qnstar <- QnEps; gnstar <- gnEps 
     } # end if universal
 
     #------------------------------------------
@@ -432,8 +450,8 @@ drinf.tmle <- function(L0, L1, L2,
         )$Q1n
         
         Q1nstar.ltmle <- targetQ1.ltmle(
-            A0 = A0, A1 = A1, L2 = L2, Qn = list(Q2n = Q2nstar.ltmle, Q1n = Qn$Q1n), gn = gn, 
-            abar = abar, tolg = tolg, tolQ = tolQ, return.models = return.models
+            A0 = A0, A1 = A1, L2 = L2, Qn = list(Q2n = Q2nstar.ltmle, Q1n = Q1n), 
+            gn = gn, abar = abar, tolg = tolg, tolQ = tolQ, return.models = return.models
         )$Q1nstar
         
         # point estimate

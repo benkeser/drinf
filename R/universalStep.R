@@ -25,6 +25,9 @@ universalStep <- function(
     # scale Q2n and Q1n
     Q2ns <- (Qn$Q2n - L2.min)/(L2.max - L2.min)
 	Q1ns <- (Qn$Q1n - L2.min)/(L2.max - L2.min)
+	# scale g1n g0n 
+	g1ns <- (gn$g1n - tolg)/(1 - 2*tolg)
+	g0ns <- (gn$g0n - tolg)/(1 - 2*tolg)
     
 	# compute vector of clever covariates
 	HQ2 <- cbind(
@@ -33,24 +36,24 @@ universalStep <- function(
 	)
 	HQ1 <- cbind(
 		(L2.max - L2.min) / gn$g0n,
-		(L2.max - L2.min) * Qnr.gnr$gnr$h0nr/Qnr.gnr$gnr$g0nr
+		(L2.max - L2.min) * Qnr.gnr$gnr$h0nr / Qnr.gnr$gnr$g0nr
 	)
 	Hg1 <- cbind(
-		Qnr.gnr$Qnr$Q2nr.seta / gn$g1n
+		(1 - 2*tolg) * Qnr.gnr$Qnr$Q2nr.seta / (gn$g1n^2)
 	)
 	Hg0 <- cbind(
-		Qnr.gnr$Qnr$Q1nr / gn$g0n
+		(1 - 2*tolg) * (Qnr.gnr$Qnr$Q1nr1 + Qnr.gnr$Qnr$Q1nr2) / (gn$g0n^2)
 	)
 
 	# take a step for Q2n 
-	Q2nEps <- (L2.max - L2.min)*plogis(SuperLearner::trimLogit(Q2ns,trim=tolQ) + dx*(HQ2%*%PnDQ2)/normPnD) + L2.min
-	Q1nEps <- (L2.max - L2.min)*plogis(SuperLearner::trimLogit(Q1ns,trim=tolQ) + dx*(HQ1%*%PnDQ1)/normPnD) + L2.min
-	g0nEps <- plogis(SuperLearner::trimLogit(gn$g0n,trim=tolg) + dx*(Hg0%*%PnDg0)/normPnD)
-	g1nEps <- plogis(SuperLearner::trimLogit(gn$g1n,trim=tolg) + dx*(Hg1%*%PnDg1)/normPnD)
-	g0nEps[g0nEps < tolg] <- tolg
-	g0nEps[g0nEps > 1-tolg] <- 1-tolg
-	g1nEps[g1nEps < tolg] <- tolg
-	g1nEps[g1nEps > 1-tolg] <- 1-tolg
+	Q2nEps <- (L2.max - L2.min)*plogis(SuperLearner::trimLogit(Q2ns) + dx*(HQ2%*%PnDQ2)/normPnD) + L2.min
+	Q1nEps <- (L2.max - L2.min)*plogis(SuperLearner::trimLogit(Q1ns) + dx*(HQ1%*%PnDQ1)/normPnD) + L2.min
+	g0nEps <- (1 - 2*tolg)*plogis(SuperLearner::trimLogit(gn$g0n) + dx*(Hg0%*%PnDg0)/normPnD) + tolg 
+	g1nEps <- (1 - 2*tolg)*plogis(SuperLearner::trimLogit(gn$g1n) + dx*(Hg1%*%PnDg1)/normPnD) + tolg
+	# g0nEps[g0nEps < tolg] <- tolg
+	# g0nEps[g0nEps > 1-tolg] <- 1-tolg
+	# g1nEps[g1nEps < tolg] <- tolg
+	# g1nEps[g1nEps > 1-tolg] <- 1-tolg
 
 	return(list(
 		Q2n = Q2nEps, Q1n = Q1nEps, g0n = g0nEps, g1n = g1nEps

@@ -4,8 +4,7 @@
 \alias{evaluateRisk}
 \title{evaluateRisk}
 \usage{
-evaluateRisk(A0, A1, L2, Q2n, Q1n, g1n, g0n, Q2nr.obsa, Q1nr, g0nr, g1nr, h0nr,
-  h1nr, hbarnr, abar)
+evaluateRisk(A0, A1, L2, Q2n, Q1n, g1n, g0n, abar, tolg)
 }
 \arguments{
 \item{A0}{A \code{vector} treatment delivered at baseline.}

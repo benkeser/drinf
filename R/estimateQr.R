@@ -8,8 +8,8 @@
 #' zero weights for every coefficient. In this case, the code will default to using the discrete
 #' Super Learner; that is, the learner with lowest CV-risk. 
 #' 
-#' @param rQ1 The "residual" for the first reduced dimension regression (on g0n), 
-#' equal to sum of the EIF at time 1 and 2. 
+#' @param rQ1_1 The "residual" for the first of two reduced-dimension regressions (on g0n). 
+#' @param rQ1_2 The "residual" for the second of two reduced-dimension regressions (on g0n). 
 #' @param rQ2 The "residual" for the second reduced dimension regression (on g1n),
 #' equal to the EIF at time 2. 
 #' @param g1n A \code{vector} of estimates of g_{1,0}.
@@ -34,11 +34,13 @@
 
 
 estimateQr <- function(
-    rQ1, rQ2, g0n, g1n, A0, A1, SL.Qr, abar, return.models, verbose, ...
+    rQ1_1, rQ1_2, rQ2, g0n, g1n, A0, A1, SL.Qr, abar, return.models, verbose, ...
 ){
     multiAlgos <- (length(SL.Qr) > 1 | is.list(SL.Qr))
     #--------
     # Q2nr 
+    # = A0*A1 / g0n * (L2 - Q2n) ~ g1n | A0 = 1
+    # = 0 | A0 = 0
     #--------
     Q2rmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Qr),args=list(
         Y=rQ2[A0==abar[1]], # fit only using A0==abar[1] obs. 
@@ -72,10 +74,11 @@ estimateQr <- function(
         Q2nr.seta <- predict(Q2rmod$fit, newdata = data.frame(g1n = g1n))
     }
     #------
-    # Q1nr 
+    # Q1nr1
+    # = A0 * (Q2n - Q1n) ~ g0n 
     #------
-    Q1rmod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Qr),args=list(
-        Y=rQ1, # fit using all obs. 
+    Q1r1mod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Qr),args=list(
+        Y=rQ1_1, # fit using all obs. 
         X=data.frame(g0n = g0n),
         newX=data.frame(g0n = g0n),
         SL.library=SL.Qr,
@@ -83,30 +86,57 @@ estimateQr <- function(
         family = gaussian(),
         verbose=verbose))
     if(multiAlgos){
-        weightfail <- all(Q1rmod$coef==0)
+        weightfail <- all(Q1r1mod$coef==0)
         if(!weightfail){
             # Super Learner predictions for A0==abar[1] obs. 
-            Q1nr <- Q1rmod$SL.predict
+            Q1nr1 <- Q1r1mod$SL.predict
         }else{
             # find dsl
-            dslcol <- which(Q1rmod$cvRisk == min(Q1rmod$cvRisk, na.rm = TRUE))
+            dslcol <- which(Q1r1mod$cvRisk == min(Q1r1mod$cvRisk, na.rm = TRUE))
             # use discrete Super Learner predictions
-            Q1nr <- Q1rmod$library.predict[,dslcol]
+            Q1nr1 <- Q1r1mod$library.predict[,dslcol]
         }
     }else{
-        Q1nr <- Q1rmod$pred
+        Q1nr1 <- Q1r1mod$pred
     }
 
+    #------
+    # Q1nr2
+    # = A0*A1 / g1n * (L2 - Q2n) ~ g0n 
+    #------
+    Q1r1mod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Qr),args=list(
+        Y=rQ1_2, # fit using all obs. 
+        X=data.frame(g0n = g0n),
+        newX=data.frame(g0n = g0n),
+        SL.library=SL.Qr,
+        obsWeights = rep(1, length(g0n)),
+        family = gaussian(),
+        verbose=verbose))
+    if(multiAlgos){
+        weightfail <- all(Q1r1mod$coef==0)
+        if(!weightfail){
+            # Super Learner predictions for A0==abar[1] obs. 
+            Q1nr2 <- Q1r1mod$SL.predict
+        }else{
+            # find dsl
+            dslcol <- which(Q1r1mod$cvRisk == min(Q1r1mod$cvRisk, na.rm = TRUE))
+            # use discrete Super Learner predictions
+            Q1nr2 <- Q1r1mod$library.predict[,dslcol]
+        }
+    }else{
+        Q1nr2 <- Q1r1mod$pred
+    }
     #--------
     # return
     #--------
-    out <- list(Q2nr.obsa = Q2nr.obsa, Q2nr.seta = Q2nr.seta, Q1nr = Q1nr,
-                Q2rmod = NULL, Q1rmod = NULL)
+    out <- list(Q2nr.obsa = Q2nr.obsa, Q2nr.seta = Q2nr.seta, Q1nr1 = Q1nr1,
+                Q1nr2 = Q1nr2, Q2rmod = NULL, Q1r1mod = NULL, Q1r2mod = NULL)
     
     if(return.models){
         Q2rmod$call <- Q1rmod$call <- NULL
         out$Q2rmod <- Q2rmod
-        out$Q1rmod <- Q1rmod
+        out$Q1r1mod <- Q1r1mod
+        out$Q1r2mod <- Q1r2mod
     }
     
     return(out)

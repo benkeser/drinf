@@ -20,18 +20,22 @@ if(length(args) < 1){
 
 ns <- c(500, 1000, 5000)
 bigB <- 1000
-g <- c("SL.hal9001","SL.glm")
-Q <- c("SL.hal9001","SL.glm")
+# g <- c("SL.hal9001","SL.glm")
+# Q <- c("SL.hal9001","SL.glm")
+g <- c("SL.glm.interaction")
+Q <- c("SL.glm.interaction")
 parm <- expand.grid(seed=1:bigB,
                     n=ns, g = g, Q = Q, stringsAsFactors = FALSE)
 
-parm$g[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
-parm$Q[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
+# parm$g[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
+# parm$Q[(parm$g == "SL.glm.interaction" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
 
+# parm <- parm[1,,drop=FALSE]
 # source in simulation Functions
 source("~/drinf/makeData.R")
 # load drinf
 library(drinf, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.2/")
+library(gam, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.2/")
 library(hal9001, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.2/")
 library(SuperLearner)
 library(methods)
@@ -136,7 +140,17 @@ if (args[1] == 'merge') {
                         n=ns, g = g, Q = Q, stringsAsFactors = FALSE)
 
     parm$g[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
-    parm$Q[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
+    parm$Q[(parm$g == "SL.glm.interaction" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
+
+
+    # ns <- c(500, 1000, 5000)
+    # bigB <- 1000
+    # # g <- c("SL.hal9001","SL.glm")
+    # # Q <- c("SL.hal9001","SL.glm")
+    # g <- c("SL.glm.interaction")
+    # Q <- c("SL.glm.interaction")
+    # parm <- expand.grid(seed=1:bigB,
+    #                     n=ns, g = g, Q = Q, stringsAsFactors = FALSE)
 
     rslt <- NULL
     for(i in 1:nrow(parm)){
@@ -165,27 +179,31 @@ if (args[1] == 'merge') {
       rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
       bias <- by(rslt, rslt$n, function(x){
         bias_drtmle <- mean(x$drtmle - x$truth, na.rm = TRUE)
+        bias_drtmle_1 <- mean(x$drtmle_maxIter1 - x$truth, na.rm = TRUE)
         bias_ltmle <- mean(x$ltmle - x$truth, na.rm = TRUE)
-        c(nrow(x), bias_drtmle, bias_ltmle)
+        c(nrow(x), bias_drtmle, bias_drtmle_1, bias_ltmle)
       })
       bias
     }
     getBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
     getBias(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
     getBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+    getBias(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
 
     getRootNBias <- function(out, n, Q, g){
       rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
       rootn_bias <- by(rslt, rslt$n, function(x){
         bias_drtmle <- sqrt(x$n[1])*mean(x$drtmle - x$truth, na.rm = TRUE)
+        bias_drtmle_1 <- mean(x$drtmle_maxIter1 - x$truth, na.rm = TRUE)        
         bias_ltmle <- sqrt(x$n[1])*mean(x$ltmle - x$truth, na.rm = TRUE)
-        c(nrow(x), bias_drtmle, bias_ltmle)
+        c(nrow(x), bias_drtmle, bias_drtmle_1, bias_ltmle)
       })
       rootn_bias
     }
     getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
     getRootNBias(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
     getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+    getRootNBias(out, n = c(500,1000,5000), Q = "SL.glm", g = "SL.glm.interaction")
 
     getCov <- function(out, n, Q, g){
       rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]

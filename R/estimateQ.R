@@ -81,9 +81,9 @@ estimateQ <- function(
         
         if(multiAlgos){
             # Super Learner predictions
-            Q2n <- Q2mod$SL.predict
+            Q2n <- as.numeric(Q2mod$SL.predict)
         }else{
-            Q2n <- Q2mod$pred
+            Q2n <- as.numeric(Q2mod$pred)
         }
         # replace extrapolated predictions with 
         # smallest/largest value
@@ -118,9 +118,9 @@ estimateQ <- function(
         ))
         if(multiAlgos){
             # Super Learner predictions
-            Q1n <- Q1mod$SL.predict
+            Q1n <- as.numeric(Q1mod$SL.predict)
         }else{
-            Q1n <- Q1mod$pred
+            Q1n <- as.numeric(Q1mod$pred)
         }
         # replace extrapolated predictions with 
         # smallest/largest value
