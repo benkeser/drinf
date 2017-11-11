@@ -7,7 +7,7 @@ set.seed(1234124)
 # dat <- makeData(n = 10000)
 
 do.one <- function(){
-	dat <- makeData(n = 500)
+	dat <- makeData(n = 5000)
 
 	# faster to call mean.tmle
 	# debug(drinf.tmle)

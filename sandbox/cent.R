@@ -20,15 +20,15 @@ if(length(args) < 1){
 
 ns <- c(500, 1000, 5000)
 bigB <- 1000
-# g <- c("SL.hal9001","SL.glm")
-# Q <- c("SL.hal9001","SL.glm")
-g <- c("SL.glm.interaction")
-Q <- c("SL.glm.interaction")
+g <- c("SL.hal9001","SL.glm")
+Q <- c("SL.hal9001","SL.glm")
+# g <- c("SL.glm.interaction")
+# Q <- c("SL.glm.interaction")
 parm <- expand.grid(seed=1:bigB,
                     n=ns, g = g, Q = Q, stringsAsFactors = FALSE)
 
-# parm$g[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
-# parm$Q[(parm$g == "SL.glm.interaction" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
+parm$g[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
+parm$Q[(parm$g == "SL.glm.interaction" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
 
 # parm <- parm[1,,drop=FALSE]
 # source in simulation Functions
@@ -167,8 +167,9 @@ if (args[1] == 'merge') {
     # format
     out <- data.frame(rslt)
     colnames(out) <- c("seed","n","truth","Q","g","drtmle",
+                       "drtmle_cil","drtmle_ciu",
                        paste0("drtmle_maxIter",1:10),
-                       "drtmle_cil","drtmle_ciu","drtmle_cov",
+                       "drtmle_cov",
                        "ltmle","ltmle_cil","ltmle_ciu","ltmle_cov","drtmle_iter",
                        "origIC","missQIC","missgIC")
     out[,(1:ncol(out))[c(-4,-5)]] <- apply(out[,(1:ncol(out))[c(-4,-5)]], 2, as.numeric)
@@ -203,7 +204,7 @@ if (args[1] == 'merge') {
     getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
     getRootNBias(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
     getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
-    getRootNBias(out, n = c(500,1000,5000), Q = "SL.glm", g = "SL.glm.interaction")
+    getRootNBias(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
 
     getCov <- function(out, n, Q, g){
       rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
@@ -217,6 +218,7 @@ if (args[1] == 'merge') {
     getCov(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
     getCov(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
     getCov(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+    getCov(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
 
     getIC <- function(out, n, Q, g){
       rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
@@ -228,6 +230,7 @@ if (args[1] == 'merge') {
     getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
     getIC(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
     getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+    getIC(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
 
 
 }

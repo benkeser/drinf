@@ -99,12 +99,18 @@ drinf.tmle <- function(L0, L1, L2,
                        glm.Q.options = list(family = gaussian()),
                        return.ltmle = TRUE,
                        return.naive = TRUE,
+                       cvFolds = 1, 
                       ...){
     
     #---------------------
     # estimate g
     #---------------------
-    gn <- estimateG(
+    n <- length(L2)
+    folds <- rep(1:cvFolds, each = ceiling(n/cvFolds), length.out=n)
+    split_L0 <- split(L0, folds)
+    split_A0 <- split(A0, folds)
+
+    gn_list <- estimateG(
         L0 = L0, L1 = L1, A0 = A0, A1 = A1, abar = abar, 
         SL.g = SL.g, glm.g = glm.g, stratify = stratify, 
         return.models = return.models, SL.g.options = SL.g.options, 
@@ -273,7 +279,8 @@ drinf.tmle <- function(L0, L1, L2,
                 Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, 
                 Q1nr1 = Qnr.gnr$Qnr$Q1nr1, Q1nr2 = Qnr.gnr$Qnr$Q1nr2, 
                 g0nr = Qnr.gnr$gnr$g0nr, g1nr = Qnr.gnr$gnr$g1nr, 
-                h0nr = Qnr.gnr$gnr$h0nr, h1nr = Qnr.gnr$gnr$h1nr, hbarnr = Qnr.gnr$gnr$hbarnr,
+                h0nr = Qnr.gnr$gnr$h0nr, h1nr = Qnr.gnr$gnr$h1nr, 
+                hbarnr = Qnr.gnr$gnr$hbarnr,
                 abar = abar
             )
             # mean of IF -- first three terms are added, last 5 are subtracted
