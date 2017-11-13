@@ -253,6 +253,7 @@ drinf.tmle <- function(L0, L1, L2,
                         return.models = return.models, SL.Qr = SL.Qr, SL.gr = SL.gr, 
                         verbose = verbose, ...
                     ))
+                    flucOutNames <- names(flucOut)
                 }else{
                     # fit reduced regression
                     Qnr.gnr_list <- sapply(1:cvFolds, redReg, 
@@ -263,11 +264,11 @@ drinf.tmle <- function(L0, L1, L2,
                       tolg = tolg, SL.Qr = SL.Qr, SL.gr = SL.gr,
                       return.models = return.models,
                       simplify = FALSE)
-                    if(verbose) cat("Reduced-dimension regressions updated.")
+                    if(verbose) cat("Reduced-dimension regressions updated. \n")
+                    flucOutNames <- "Nothing to see here."
                 }
                 # look for what names are in function output and assign values 
                 # accordingly
-                flucOutNames <- names(flucOut)
                 if("Q2nstar" %in% flucOutNames){
                     if(verbose) cat("Q2n was targeted by ", ff,". \n")
                     split_Q2nstar <- split(flucOut$Q2nstar, folds)

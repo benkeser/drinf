@@ -80,7 +80,8 @@ if (args[1] == 'run') {
     
     # faster to call mean.tmle
     object <- drinf.tmle(
-    L0 = dat$L0, L1 = dat$L1, L2 = dat$L2, A0 = dat$A0, A1 = dat$A1, 
+    L0 = dat$L0, L1 = dat$L1, L2 = dat$L2, 
+    A0 = dat$A0, A1 = dat$A1, 
     abar = c(1,1), 
     SL.Q = parm$Q[i],
     SL.g = parm$g[i], 
@@ -94,7 +95,7 @@ if (args[1] == 'run') {
     maxIter = 25,
     return.ltmle = TRUE,
     allatonce = FALSE,
-    tolg = 1e-2,
+    tolg = 5e-2,
     tolQ = 1e-2, stratify = TRUE
     )
 
