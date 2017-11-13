@@ -4,8 +4,8 @@
 \alias{estimateG}
 \title{estimateG}
 \usage{
-estimateG(L0, L1, A0, A1, abar, SL.g, glm.g, stratify, return.models,
-  SL.g.options, verbose, tolg, ...)
+estimateG(validFold, folds, L0, L1, A0, A1, abar, SL.g, glm.g, stratify,
+  return.models, SL.g.options, verbose, tolg, ...)
 }
 \arguments{
 \item{L0}{A \code{data.frame} featuring covariates measured at baseline.}

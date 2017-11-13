@@ -6,14 +6,15 @@ library(hal9001)
 set.seed(1234124)
 # dat <- makeData(n = 10000)
 
-do.one <- function(){
-	dat <- makeData(n = 5000)
+# do.one <- function(){
+	dat <- makeData(n = 500)
 
 	# faster to call mean.tmle
 	# debug(drinf.tmle)
 	object <- drinf.tmle(
 	L0 = dat$L0, L1 = dat$L1, L2 = dat$L2, A0 = dat$A0, A1 = dat$A1, 
 	abar = c(1,1), 
+	cvFolds = 1, 
 	SL.Q = "SL.glm.interaction",
 	SL.g = "SL.glm.interaction", 
 	SL.Qr = "SL.gam",
@@ -24,7 +25,7 @@ do.one <- function(){
 	           "targetQ2","targetQ1", "redReg"),
 	return.models = FALSE,
 	verbose = FALSE,
-	maxIter = 5,
+	maxIter = 20,
 	return.ltmle = TRUE,
 	allatonce = FALSE,
 	tolg = 5e-2,

@@ -4,8 +4,8 @@
 \alias{estimategr}
 \title{estimategr}
 \usage{
-estimategr(rg0, rg1, g0n, g1n, A0, A1, Q2n, Q1n, SL.gr, abar, return.models,
-  tolg, verbose, ...)
+estimategr(rg0, rg1, g0n, g1n, A0, A1, folds, validFold, Q2n, Q1n, SL.gr, abar,
+  return.models, tolg, verbose, ...)
 }
 \arguments{
 \item{rg0}{The "residual" for the first reduced dimension regression (on Q1n).}
@@ -19,6 +19,10 @@ estimategr(rg0, rg1, g0n, g1n, A0, A1, Q2n, Q1n, SL.gr, abar, return.models,
 \item{A0}{A \code{vector} treatment delivered at baseline.}
 
 \item{A1}{A \code{vector} treatment deliver after \code{L1} is measured.}
+
+\item{folds}{Vector of cross-validation folds}
+
+\item{validFold}{Which fold is the validation fold}
 
 \item{Q2n}{A \code{vector} of estimates of Q_{2,0}}
 

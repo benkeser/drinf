@@ -107,32 +107,39 @@ drinf.tmle <- function(L0, L1, L2,
     #---------------------
     n <- length(L2)
     folds <- rep(1:cvFolds, each = ceiling(n/cvFolds), length.out=n)
-    split_L0 <- split(L0, folds)
-    split_A0 <- split(A0, folds)
 
-    gn_list <- estimateG(
-        L0 = L0, L1 = L1, A0 = A0, A1 = A1, abar = abar, 
-        SL.g = SL.g, glm.g = glm.g, stratify = stratify, 
-        return.models = return.models, SL.g.options = SL.g.options, 
-        verbose = verbose, tolg = tolg, ...
-    )
+    gn_list <- sapply(1:cvFolds, estimateG, 
+                        L0 = L0, A0 = A0, L1 = L1, A1 = A1,
+                        abar = abar, folds = folds, 
+                        SL.g = SL.g, glm.g = glm.g, stratify = stratify, 
+                        return.models = return.models, SL.g.options = SL.g.options, 
+                        verbose = verbose, tolg = tolg, simplify = FALSE)
     
     #---------------------
     # estimate Q
     #---------------------
-    Qn <- estimateQ(
-        L0 = L0, L1 = L1, L2 = L2, A0 = A0, A1 = A1, abar = abar,  
-        SL.Q = SL.Q, SL.Q.options = SL.Q.options, return.models = return.models, 
-        glm.Q = glm.Q, glm.Q.options = glm.Q.options, verbose = verbose,
-        stratify = stratify, ...
-    )
+    Qn_list <- sapply(1:cvFolds, estimateQ, 
+                      L0 = L0, A0 = A0, 
+                      L1 = L1, A1 = A1, 
+                      L2 = L2, FUN = estimateQ, 
+                      abar = abar, folds = folds, 
+                      SL.Q = SL.Q, SL.Q.options = SL.Q.options, 
+                      return.models = return.models, 
+                      glm.Q = glm.Q, glm.Q.options = glm.Q.options, 
+                      verbose = verbose, stratify = stratify,
+                      simplify = FALSE)
     
     #-----------------------------------------
     # compute reduced dimension regressions
     #----------------------------------------
-    Qnr.gnr <- redReg(A0 = A0, A1 = A1, L2 = L2, abar = abar, 
-                      gn = gn, Qn = Qn, verbose = verbose, tolg = tolg, 
-                      SL.Qr = SL.Qr, SL.gr = SL.gr, return.models = return.models)
+    Qnr.gnr_list <- sapply(1:cvFolds, redReg, 
+                      gn = gn_list, Qn = Qn_list, 
+                      A0 = A0, A1 = A1, L2 = L2, 
+                      folds = folds, abar = abar, 
+                      verbose = verbose, 
+                      tolg = tolg, SL.Qr = SL.Qr, SL.gr = SL.gr,
+                      return.models = return.models,
+                      simplify = FALSE)
     
     #----------------------------------------
     # targeting portion of method
@@ -145,93 +152,92 @@ drinf.tmle <- function(L0, L1, L2,
         
         # set up an empty vector of estimates
         psin_trace <- rep(NA, maxIter)
+        se_trace <- rep(NA, maxIter)
         #----------------------------------------
         # target Q and g according to flucOrd
         #----------------------------------------
         # initialize vectors in Qnstar and gnstar that will hold
         # targeted nuisance parameters by setting equal to the initial values
-        Qnstar <- vector(mode = "list")
-        gnstar <- vector(mode = "list")
-        
-        Qnstar$Q2n <- Qn$Q2n
-        Qnstar$Q1n <- Qn$Q1n
-        gnstar$g1n <- gn$g1n
-        gnstar$g0n <- gn$g0n
-        
+        Qnstar_list <- Qn_list
+        gnstar_list <- gn_list
+        full_Qnstar <- do.call(Map, c(c, Qnstar_list))
+        full_gnstar <- do.call(Map, c(c, gnstar_list))
+        full_Qnr.gnr <- do.call(Map, c(c, Qnr.gnr_list))
+        est.naive <- mean(full_Qnstar$Q1n)
         # flucOrd is a vector of functions to call in sequence to 
         # perform the targeting.
-        for(ff in flucOrd){
-            if(verbose){
-                cat("Calling ", ff, " for targeting step. \n")
-            }
-            flucOut <- do.call(ff, args = list(
-                A0 = A0, A1 = A1, L2 = L2, Qn = Qnstar, gn = gnstar, Qnr.gnr = Qnr.gnr, 
-                tolg = tolg, tolQ = tolQ, abar = abar, return.models = return.models,
-                SL.Qr = SL.Qr, SL.gr = SL.gr, verbose = verbose, ...
-            ))
-            # look for what names are in function output and assign values 
-            # accordingly
-            flucOutNames <- names(flucOut)
-            if("Q2nstar" %in% flucOutNames){
-                if(verbose) cat("Q2n was targeted by ", ff,". \n")
-                Qnstar$Q2n <- flucOut$Q2nstar
-            }
-            if("Q1nstar" %in% flucOutNames){
-                if(verbose) cat("Q1n was targeted by ", ff,". \n")
-                Qnstar$Q1n <- flucOut$Q1nstar
-            }
-            if("g1nstar" %in% flucOutNames){
-                if(verbose) cat("g1n was targeted by ", ff,". \n")
-                gnstar$g1n <- flucOut$g1nstar
-            }
-            if("g0nstar" %in% flucOutNames){
-                if(verbose) cat("g0n was targeted by ", ff,". \n")
-                gnstar$g0n <- flucOut$g0nstar
-            }
-            # one of these functions could be redReg, to update the reduced
-            # dimension regressions in between targeting steps -- if so, 
-            # replace Qnr.gnr
-            if("Qnr" %in% flucOutNames){
-                Qnr.gnr <- flucOut
-            }
-        } 
+        # for(ff in flucOrd){
+        #     if(verbose){
+        #         cat("Calling ", ff, " for targeting step. \n")
+        #     }
+        #     flucOut <- do.call(ff, args = list(
+        #         A0 = A0, A1 = A1, L2 = L2, Qn = Qnstar, gn = gnstar, Qnr.gnr = Qnr.gnr, 
+        #         tolg = tolg, tolQ = tolQ, abar = abar, return.models = return.models,
+        #         SL.Qr = SL.Qr, SL.gr = SL.gr, verbose = verbose, ...
+        #     ))
+        #     # look for what names are in function output and assign values 
+        #     # accordingly
+        #     flucOutNames <- names(flucOut)
+        #     if("Q2nstar" %in% flucOutNames){
+        #         if(verbose) cat("Q2n was targeted by ", ff,". \n")
+        #         Qnstar$Q2n <- flucOut$Q2nstar
+        #     }
+        #     if("Q1nstar" %in% flucOutNames){
+        #         if(verbose) cat("Q1n was targeted by ", ff,". \n")
+        #         Qnstar$Q1n <- flucOut$Q1nstar
+        #     }
+        #     if("g1nstar" %in% flucOutNames){
+        #         if(verbose) cat("g1n was targeted by ", ff,". \n")
+        #         gnstar$g1n <- flucOut$g1nstar
+        #     }
+        #     if("g0nstar" %in% flucOutNames){
+        #         if(verbose) cat("g0n was targeted by ", ff,". \n")
+        #         gnstar$g0n <- flucOut$g0nstar
+        #     }
+        #     # one of these functions could be redReg, to update the reduced
+        #     # dimension regressions in between targeting steps -- if so, 
+        #     # replace Qnr.gnr
+        #     if("Qnr" %in% flucOutNames){
+        #         Qnr.gnr <- flucOut
+        #     }
+        # } 
         
-        #-------------------------
-        # evaluate IF
-        #-------------------------
-        if.dr <- evaluateIF(
-            A0 = A0, A1 = A1, L2 = L2, 
-            Q2n = Qnstar$Q2n, Q1n = Qnstar$Q1n, 
-            g1n = gnstar$g1n, g0n = gnstar$g0n, 
-            Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, 
-            Q1nr1 = Qnr.gnr$Qnr$Q1nr1, Q1nr2 = Qnr.gnr$Qnr$Q1nr2, 
-            g0nr = Qnr.gnr$gnr$g0nr, g1nr = Qnr.gnr$gnr$g1nr, 
-            h0nr = Qnr.gnr$gnr$h0nr, h1nr = Qnr.gnr$gnr$h1nr, hbarnr = Qnr.gnr$gnr$hbarnr,
-            abar = abar
-        )
-        # mean of IF -- first three terms are added, last 5 are subtracted
-        meanif.dr <- c(
-            # original terms
-            t(matrix(c(1,1,1)))%*%colMeans(Reduce("cbind",if.dr[1:3])),
-            # extra terms tageting g's
-            t(matrix(c(1,1)))%*%colMeans(Reduce("cbind",if.dr[4:5])),
-            # extra terms targeting Q's
-            t(matrix(c(1,1,1)))%*%colMeans(Reduce("cbind",if.dr[6:8]))
-        )
+        # #-------------------------
+        # # evaluate IF
+        # #-------------------------
+        # if.dr <- evaluateIF(
+        #     A0 = A0, A1 = A1, L2 = L2, 
+        #     Q2n = Qnstar$Q2n, Q1n = Qnstar$Q1n, 
+        #     g1n = gnstar$g1n, g0n = gnstar$g0n, 
+        #     Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, 
+        #     Q1nr1 = Qnr.gnr$Qnr$Q1nr1, Q1nr2 = Qnr.gnr$Qnr$Q1nr2, 
+        #     g0nr = Qnr.gnr$gnr$g0nr, g1nr = Qnr.gnr$gnr$g1nr, 
+        #     h0nr = Qnr.gnr$gnr$h0nr, h1nr = Qnr.gnr$gnr$h1nr, hbarnr = Qnr.gnr$gnr$hbarnr,
+        #     abar = abar
+        # )
+        # # mean of IF -- first three terms are added, last 5 are subtracted
+        # meanif.dr <- c(
+        #     # original terms
+        #     t(matrix(c(1,1,1)))%*%colMeans(Reduce("cbind",if.dr[1:3])),
+        #     # extra terms tageting g's
+        #     t(matrix(c(1,1)))%*%colMeans(Reduce("cbind",if.dr[4:5])),
+        #     # extra terms targeting Q's
+        #     t(matrix(c(1,1,1)))%*%colMeans(Reduce("cbind",if.dr[6:8]))
+        # )
         
         #-----------------------------------
         # targeting loop for dr inference
         #-----------------------------------
-        iter <- 1
-        psin_trace[iter] <- mean(Qnstar$Q1n)
-
+        iter <- 0
+        meanif.dr <- Inf
         while(max(abs(meanif.dr)) > tolIF & iter < maxIter){
+            iter <- iter + 1
             #-----------------------------------------
             # compute reduced dimension regressions
             #----------------------------------------
-            Qnr.gnr <- redReg(A0 = A0, A1 = A1, L2 = L2, abar = abar, 
-                              gn = gnstar, Qn = Qnstar, verbose = verbose, tolg = tolg, 
-                              SL.Qr = SL.Qr, SL.gr = SL.gr, return.models = return.models)
+            # Qnr.gnr <- redReg(A0 = A0, A1 = A1, L2 = L2, abar = abar, 
+            #                   gn = gnstar, Qn = Qnstar, verbose = verbose, 
+            #                   tolg = tolg, SL.Qr = SL.Qr, SL.gr = SL.gr, return.models = return.models)
             
             #--------------------
             # target Q and g
@@ -240,47 +246,77 @@ drinf.tmle <- function(L0, L1, L2,
                 if(verbose){
                     cat("Calling ", ff, " for targeting step. \n")
                 }
-                flucOut <- do.call(ff, args = list(
-                    A0 = A0, A1 = A1, L2 = L2, Qn = Qnstar, gn = gnstar, Qnr.gnr = Qnr.gnr, 
-                    tolg = tolg, tolQ = tolQ, abar = abar, return.models = return.models,
-                    SL.Qr = SL.Qr, SL.gr = SL.gr,verbose = verbose, ...
-                ))
+                if(ff != "redReg"){
+                    flucOut <- do.call(ff, args = list(
+                        A0 = A0, A1 = A1, L2 = L2, Qn = full_Qnstar, gn = full_gnstar, 
+                        Qnr.gnr = full_Qnr.gnr, tolg = tolg, tolQ = tolQ, abar = abar, 
+                        return.models = return.models, SL.Qr = SL.Qr, SL.gr = SL.gr, 
+                        verbose = verbose, ...
+                    ))
+                }else{
+                    # fit reduced regression
+                    Qnr.gnr_list <- sapply(1:cvFolds, redReg, 
+                      gn = gnstar_list, Qn = Qnstar_list, 
+                      A0 = A0, A1 = A1, L2 = L2, 
+                      folds = folds, abar = abar, 
+                      verbose = verbose, 
+                      tolg = tolg, SL.Qr = SL.Qr, SL.gr = SL.gr,
+                      return.models = return.models,
+                      simplify = FALSE)
+                    if(verbose) cat("Reduced-dimension regressions updated.")
+                }
                 # look for what names are in function output and assign values 
                 # accordingly
                 flucOutNames <- names(flucOut)
                 if("Q2nstar" %in% flucOutNames){
                     if(verbose) cat("Q2n was targeted by ", ff,". \n")
-                    Qnstar$Q2n <- flucOut$Q2nstar
+                    split_Q2nstar <- split(flucOut$Q2nstar, folds)
+                    Qnstar_list <- mapply(x = Qnstar_list, values = split_Q2nstar, 
+                                     FUN = list_replace, MoreArgs = list(list = "Q2n"),
+                                     SIMPLIFY = FALSE)
                 }
                 if("Q1nstar" %in% flucOutNames){
                     if(verbose) cat("Q1n was targeted by ", ff,". \n")
-                    Qnstar$Q1n <- flucOut$Q1nstar
+                    split_Q1nstar <- split(flucOut$Q1nstar, folds)
+                    Qnstar_list <- mapply(x = Qnstar_list, values = split_Q1nstar, 
+                                     FUN = list_replace, MoreArgs = list(list = "Q1n"),
+                                     SIMPLIFY = FALSE)
                 }
                 if("g1nstar" %in% flucOutNames){
                     if(verbose) cat("g1n was targeted by ", ff,". \n")
-                    gnstar$g1n <- flucOut$g1nstar
+                    split_g1nstar <- split(flucOut$g1nstar, folds)
+                    gnstar_list <- mapply(x = gnstar_list, values = split_g1nstar, 
+                                     FUN = list_replace, MoreArgs = list(list = "g1n"),
+                                     SIMPLIFY = FALSE)                
                 }
                 if("g0nstar" %in% flucOutNames){
                     if(verbose) cat("g0n was targeted by ", ff,". \n")
-                    gnstar$g0n <- flucOut$g0nstar
+                    split_g0nstar <- split(flucOut$g0nstar, folds)
+                    gnstar_list <- mapply(x = gnstar_list, values = split_g0nstar, 
+                                     FUN = list_replace, MoreArgs = list(list = "g0n"),
+                                     SIMPLIFY = FALSE)                 
                 }
-                if("Qnr" %in% flucOutNames){
-                    Qnr.gnr <- flucOut
-                }
+                # if("Qnr" %in% flucOutNames){
+                #     Qnr.gnr <- flucOut
+                # }
             } 
             
             #-------------------------
             # evaluate IF
             #-------------------------
+            full_Qnstar <- do.call(Map, c(c, Qnstar_list))
+            full_gnstar <- do.call(Map, c(c, gnstar_list))
+            full_Qnr.gnr <- do.call(Map, c(c, Qnr.gnr_list))
+
             if.dr <- evaluateIF(
                 A0 = A0, A1 = A1, L2 = L2, 
-                Q2n = Qnstar$Q2n, Q1n = Qnstar$Q1n, 
-                g1n = gnstar$g1n, g0n = gnstar$g0n, 
-                Q2nr.obsa = Qnr.gnr$Qnr$Q2nr.obsa, 
-                Q1nr1 = Qnr.gnr$Qnr$Q1nr1, Q1nr2 = Qnr.gnr$Qnr$Q1nr2, 
-                g0nr = Qnr.gnr$gnr$g0nr, g1nr = Qnr.gnr$gnr$g1nr, 
-                h0nr = Qnr.gnr$gnr$h0nr, h1nr = Qnr.gnr$gnr$h1nr, 
-                hbarnr = Qnr.gnr$gnr$hbarnr,
+                Q2n = full_Qnstar$Q2n, Q1n = full_Qnstar$Q1n, 
+                g1n = full_gnstar$g1n, g0n = full_gnstar$g0n, 
+                Q2nr.obsa = full_Qnr.gnr$Qnr$Q2nr.obsa, 
+                Q1nr1 = full_Qnr.gnr$Qnr$Q1nr1, Q1nr2 = full_Qnr.gnr$Qnr$Q1nr2, 
+                g0nr = full_Qnr.gnr$gnr$g0nr, g1nr = full_Qnr.gnr$gnr$g1nr, 
+                h0nr = full_Qnr.gnr$gnr$h0nr, h1nr = full_Qnr.gnr$gnr$h1nr, 
+                hbarnr = full_Qnr.gnr$gnr$hbarnr,
                 abar = abar
             )
             # mean of IF -- first three terms are added, last 5 are subtracted
@@ -294,8 +330,12 @@ drinf.tmle <- function(L0, L1, L2,
             )
 
             # update iteration
-            iter <- iter + 1
-            psin_trace[iter] <- mean(Qnstar$Q1n)
+            psin_trace[iter] <- mean(full_Qnstar$Q1n)
+            se_trace[iter] <- sqrt(var(
+                (if.dr$Dstar0 + if.dr$Dstar1 + if.dr$Dstar2 -
+                if.dr$Dg1.Q2 - if.dr$Dg0.Q1 - if.dr$DQ2.g1 - 
+                if.dr$DQ2.g0 - if.dr$DQ1.g0)
+            )/length(A0))
 
             cat(#"\n epsilon = ", etastar$flucmod$coefficients[1],
                 "\n mean ic = ", meanif.dr, 
@@ -431,7 +471,7 @@ drinf.tmle <- function(L0, L1, L2,
     # evaluate parameter and compute std err
     #------------------------------------------
     # evaluate parameter
-    psin <- mean(Qnstar$Q1n)
+    psin <- mean(full_Qnstar$Q1n)
        
     # compute standard errors
     se <- sqrt(var(
@@ -444,21 +484,42 @@ drinf.tmle <- function(L0, L1, L2,
     # Computing the regular LTMLE
     #-----------------------------------
     if(return.ltmle){
+        Qnstar_list.ltmle <- Qn_list
+        full_Qn.ltmle <- do.call(Map, c(c, Qn_list))
+        full_gn <- do.call(Map, c(c, gn_list))
+
         Q2nstar.ltmle <- targetQ2.ltmle(
-            A0 = A0, A1 = A1, L2 = L2, Qn = Qn, gn = gn, 
+            A0 = A0, A1 = A1, L2 = L2, Qn = full_Qn.ltmle, gn = full_gn, 
             abar = abar, tolg = tolg, tolQ = tolQ, return.models = return.models
         )$Q2nstar
-        
-        Q1n <- estimateQ1.ltmle(
-            L2 = L2, L0 = L0, Q2n = Q2nstar.ltmle, A0 = A0, A1 = A1, 
-            abar = abar, SL.Q = SL.Q, SL.Q.options = SL.Q.options, 
-            glm.Q = glm.Q, glm.Q.options = glm.Q.options, 
-            return.models = return.models, verbose = verbose, stratify = stratify
-        )$Q1n
-        
+
+        # replace values
+        split_Q2nstar.ltmle <- split(Q2nstar.ltmle, folds)
+        Qnstar_list.ltmle <- mapply(x = Qnstar_list.ltmle, values = split_Q2nstar.ltmle, 
+                         FUN = list_replace, MoreArgs = list(list = "Q2n"),
+                         SIMPLIFY = FALSE)
+        full_Qnstar.ltmle <- do.call(Map, c(c, Qnstar_list.ltmle))
+
+        Q1n.ltmle <- sapply(1:cvFolds, estimateQ1.ltmle,
+                        L2 = L2, L0 = L0, Q2n = full_Qnstar.ltmle$Q2n, 
+                        A0 = A0, A1 = A1, folds = folds, abar = abar, 
+                        SL.Q = SL.Q, SL.Q.options = SL.Q.options, 
+                        glm.Q = glm.Q, glm.Q.options = glm.Q.options, 
+                        return.models = return.models, verbose = verbose, 
+                        stratify = stratify, simplify = FALSE)
+        # replace values
+        Qnstar_list.ltmle <- mapply(x = Qnstar_list.ltmle, 
+                                    values = lapply(Q1n.ltmle, "[[", "Q1n"), 
+                 FUN = list_replace, MoreArgs = list(list = "Q1n"),
+                 SIMPLIFY = FALSE)
+        # collapse list 
+        full_Qnstar.ltmle <- do.call(Map, c(c, Qnstar_list.ltmle))
+
         Q1nstar.ltmle <- targetQ1.ltmle(
-            A0 = A0, A1 = A1, L2 = L2, Qn = list(Q2n = Q2nstar.ltmle, Q1n = Q1n), 
-            gn = gn, abar = abar, tolg = tolg, tolQ = tolQ, return.models = return.models
+            A0 = A0, A1 = A1, L2 = L2, 
+            Qn = full_Qnstar.ltmle, 
+            gn = full_gn, abar = abar, tolg = tolg, tolQ = tolQ, 
+            return.models = return.models
         )$Q1nstar
         
         # point estimate
@@ -466,8 +527,9 @@ drinf.tmle <- function(L0, L1, L2,
         
         # influence functions
         if.ltmle <- evaluateEIF(
-            A0 = A0, A1 = A1, L2 = L2, Q2n = Q2nstar.ltmle, 
-            Q1n = Q1nstar.ltmle, g1n = gn$g1n, g0n = gn$g0n, abar = abar
+            A0 = A0, A1 = A1, L2 = L2, Q2n = full_Qnstar.ltmle$Q2n, 
+            Q1n = full_Qnstar.ltmle$Q1n, g1n = full_gn$g1n, g0n = full_gn$g0n, 
+            abar = abar
         )
         
         # se
@@ -490,9 +552,11 @@ drinf.tmle <- function(L0, L1, L2,
     n_notNA_psin_trace <- sum(!is.na(psin_trace))
     if(n_notNA_psin_trace < length(psin_trace)){
         psin_trace[(n_notNA_psin_trace+1):length(psin_trace)] <- psin_trace[n_notNA_psin_trace]
+        se_trace[(n_notNA_psin_trace+1):length(psin_trace)] <- se_trace[n_notNA_psin_trace]
     }
 
     out$est_trace <- psin_trace
+    out$se_trace <- se_trace
     # ltmle output
     out$est.ltmle <- NULL
     out$se.ltmle <- NULL
@@ -504,7 +568,7 @@ drinf.tmle <- function(L0, L1, L2,
     # naive output
     out$est.naive <- NULL
     if(return.ltmle){
-        out$est.naive <- mean(Qn$Q1n)
+        out$est.naive <- est.naive
     }
     
     # number of iterations

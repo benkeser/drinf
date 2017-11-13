@@ -34,9 +34,28 @@
 
 
 estimateG <- function(
-    L0, L1, A0, A1, abar, SL.g, glm.g, stratify, 
+    validFold, folds, L0, L1, A0, A1, abar, SL.g, glm.g, stratify, 
     return.models, SL.g.options, verbose, tolg, ...
-){
+){  
+    if(all(folds == 1)){
+        train_L0 <- valid_L0 <- L0
+        train_L1 <- valid_L1 <- L1
+        train_A0 <- valid_A0 <- A0
+        train_A1 <- valid_A1 <- A1
+    }else{
+        # training data
+        train_L0 <- L0[folds != validFold, , drop = FALSE]
+        train_L1 <- L1[folds != validFold, , drop = FALSE]
+        train_A0 <- A0[folds != validFold]
+        train_A1 <- A1[folds != validFold]
+
+        # validation data
+        valid_L0 <- L0[folds == validFold, , drop = FALSE]
+        valid_L1 <- L1[folds == validFold, , drop = FALSE]
+        valid_A0 <- A0[folds == validFold]
+        valid_A1 <- A1[folds == validFold]
+    }
+
     if(is.null(SL.g) & is.null(glm.g)){ 
         stop("Specify Super Learner library or GLM formula for g")
     }
@@ -53,9 +72,9 @@ estimateG <- function(
         #--------
         g0mod <- do.call(
             ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.g),args = c(list(
-            Y = as.numeric(A0==abar[1]), X = L0, newX = L0, 
-            SL.library=SL.g, obsWeights = rep(1, length(A0)),
-            verbose=verbose), SL.g.options
+            Y = as.numeric(train_A0==abar[1]), X = train_L0, newX = valid_L0, 
+            SL.library = SL.g, obsWeights = rep(1, length(train_A0)),
+            verbose = verbose), SL.g.options
         ))
         if(multiAlgos){       
             # Super Learner predictions
@@ -73,22 +92,22 @@ estimateG <- function(
         g1mod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.g),args = c(list(
             Y=eval(parse(text=paste0(
                 ifelse(stratify,
-                   "as.numeric(A1[A0==abar[1]] == abar[2])",
-                       "as.numeric(A1==abar[2])"
+                   "as.numeric(train_A1[train_A0==abar[1]] == abar[2])",
+                       "as.numeric(train_A1==abar[2])"
                        )
             ))),
             X=eval(parse(text=paste0(
                 ifelse(stratify,
-                       "cbind(L0,L1)[A0==abar[1],]",
-                       "cbind(L0,L1,A0)"
+                       "cbind(train_L0,train_L1)[train_A0==abar[1],]",
+                       "cbind(train_L0,train_L1,train_A0)"
             )))),
             newX=eval(parse(text=paste0(
                 ifelse(stratify,
-                       "data.frame(L0, L1)",
-                       "data.frame(L0, L1, A0 = abar[1])"
+                       "data.frame(valid_L0, valid_L1)",
+                       "data.frame(valid_L0, valid_L1, A0 = abar[1])"
                 )))),
             SL.library=SL.g,
-            obsWeights=rep(1,ifelse(stratify, sum(A0==abar[1]), length(A0))),
+            obsWeights=rep(1,ifelse(stratify, sum(train_A0==abar[1]), length(train_A0))),
             verbose=verbose), SL.g.options)
         )
         if(multiAlgos){
@@ -107,9 +126,9 @@ estimateG <- function(
         #-------
         # g0n
         #-------
-        g0mod <- glm(as.formula(paste0("as.numeric(A0==abar[1])~",glm.g)), 
-                  data=L0, family=binomial())
-        g0n <- predict(g0mod, type="response")
+        g0mod <- glm(as.formula(paste0("as.numeric(train_A0==abar[1])~",glm.g)), 
+                  data=train_L0, family=binomial())
+        g0n <- predict(g0mod, type="response", newdata = valid_L0)
         g0n[g0n < tolg] <- tolg
         g0n[g0n > 1 - tolg] <- 1 - tolg
         
@@ -118,18 +137,18 @@ estimateG <- function(
         #-------
         g1mod <- glm(as.formula(paste0(
             ifelse(stratify,
-                   "as.numeric(A1[A0==abar[1]]==abar[2])~",
-                   "as.numeric(A1==abar[2])~"
+                   "as.numeric(train_A1[train_A0==abar[1]]==abar[2])~",
+                   "as.numeric(train_A1==abar[2])~"
             ),glm.g)), 
                      data=eval(parse(text=paste0(
                          ifelse(stratify,
-                                "cbind(L0,L1)[A0==abar[1],]",
-                                "cbind(L0,L1,A0)"
+                                "cbind(train_L0,train_L1)[train_A0==abar[1],]",
+                                "cbind(train_L0,train_L1,train_A0)"
                          )))), family=binomial())
         g1n <- predict(g1mod, type="response", newdata = eval(parse(text=paste0(
             ifelse(stratify,
-                   "data.frame(L0, L1)",
-                   "data.frame(L0, L1, A0 = abar[1])"
+                   "data.frame(valid_L0, valid_L1)",
+                   "data.frame(valid_L0, valid_L1, A0 = abar[1])"
             )))))
         g1n[g1n < tolg] <- tolg
         g1n[g1n > 1 - tolg] <- 1 - tolg

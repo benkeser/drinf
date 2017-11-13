@@ -4,8 +4,8 @@
 \alias{estimateQr}
 \title{estimateQr}
 \usage{
-estimateQr(rQ1_1, rQ1_2, rQ2, g0n, g1n, A0, A1, SL.Qr, abar, return.models,
-  verbose, ...)
+estimateQr(rQ1_1, rQ1_2, rQ2, g0n, g1n, A0, A1, SL.Qr, folds, validFold, abar,
+  return.models, verbose, ...)
 }
 \arguments{
 \item{rQ1_1}{The "residual" for the first of two reduced-dimension regressions (on g0n).}
@@ -26,6 +26,10 @@ equal to the EIF at time 2.}
 \item{SL.Qr}{A \code{vector} or \code{list} specifying the SuperLearner library
 to be used to estimate the reduced-dimension regression to protect against misspecification of the
 outcome regressions.  See \code{SuperLearner} package for details.}
+
+\item{folds}{Vector of cross-validation folds}
+
+\item{validFold}{Which fold is the validation fold}
 
 \item{abar}{A \code{vector} of length 2 indicating the treatment assignment 
 that is of interest.}

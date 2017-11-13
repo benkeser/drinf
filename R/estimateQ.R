@@ -37,10 +37,32 @@
 
 
 estimateQ <- function(
-    L0, L1, L2, A0, A1, abar, SL.Q, SL.Q.options, glm.Q, 
+    validFold, folds, L0, L1, L2, A0, A1, abar, SL.Q, SL.Q.options, glm.Q, 
     glm.Q.options, return.models, verbose, stratify, 
     ...
-){
+){  
+    all1 <- all(folds == 1)
+    if(all1){
+      train_L0 <- valid_L0 <- L0
+      train_L1 <- valid_L1 <- L1
+      train_A0 <- valid_A0 <- A0
+      train_A1 <- valid_A1 <- A1
+      train_L2 <- valid_L2 <- L2
+    }else{
+      # training data
+      train_L0 <- L0[folds != validFold, , drop = FALSE]
+      train_L1 <- L1[folds != validFold, , drop = FALSE]
+      train_A0 <- A0[folds != validFold]
+      train_A1 <- A1[folds != validFold]
+      train_L2 <- L2[folds != validFold]
+
+      # validation data
+      valid_L0 <- L0[folds == validFold, , drop = FALSE]
+      valid_L1 <- L1[folds == validFold, , drop = FALSE]
+      valid_A0 <- A0[folds == validFold]
+      valid_A1 <- A1[folds == validFold]
+      valid_L2 <- L2[folds == validFold]
+    }
     if(is.null(SL.Q) & is.null(glm.Q)){ 
         stop("Specify Super Learner library or GLM formula for g")
     }
@@ -58,14 +80,14 @@ estimateQ <- function(
         Q2mod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Q),args=c(list(
             Y=eval(parse(text=paste0(
                 ifelse(stratify,
-                       "L2[A0==abar[1] & A1==abar[2]]",
-                       "L2"
+                       "train_L2[train_A0==abar[1] & train_A1==abar[2]]",
+                       "train_L2"
                        )
             ))), 
             X=eval(parse(text=paste0(
                 ifelse(stratify,
-                       "cbind(L0,L1)[A0==abar[1] & A1==abar[2],]",
-                       "cbind(L0,L1,A0,A1)"
+                       "cbind(train_L0,train_L1)[train_A0==abar[1] & train_A1==abar[2],]",
+                       "cbind(train_L0,train_L1,train_A0,train_A1)"
                        )
             ))), 
             newX = eval(parse(text=paste0(
@@ -75,46 +97,54 @@ estimateQ <- function(
                 )
             ))),
             SL.library=SL.Q,
-            obsWeights = rep(1, ifelse(stratify, length(L2[A0==abar[1] & A1==abar[2]]),length(L2))),
+            obsWeights = rep(1, ifelse(stratify, length(train_L2[train_A0==abar[1] & train_A1==abar[2]]),length(train_L2))),
             verbose=verbose), SL.Q.options
         ))
         
         if(multiAlgos){
             # Super Learner predictions
-            Q2n <- as.numeric(Q2mod$SL.predict)
+            Q2n_all <- as.numeric(Q2mod$SL.predict)
         }else{
-            Q2n <- as.numeric(Q2mod$pred)
+            Q2n_all <- as.numeric(Q2mod$pred)
         }
         # replace extrapolated predictions with 
         # smallest/largest value
-        Q2n[Q2n < min(L2)] <- min(L2)
-        Q2n[Q2n > max(L2)] <- max(L2)
+        Q2n_all[Q2n_all < min(L2)] <- min(L2)
+        Q2n_all[Q2n_all > max(L2)] <- max(L2)
         
+        # on validation
+        Q2n <- Q2n_all[folds == validFold]
+        if(!all1){
+          train_Q2n <- Q2n_all[folds != validFold]
+        }else{
+          train_Q2n <- Q2n
+        }
+
         #-----------
         # Q1n
         #-----------
         Q1mod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Q),args = c(list(
             Y=eval(parse(text=paste0(
                 ifelse(stratify,
-                       "Q2n[A0==abar[1]]",
-                       "Q2n"
+                       "train_Q2n[train_A0==abar[1]]",
+                       "train_Q2n"
                 )
             ))), 
             X=eval(parse(text=paste0(
                 ifelse(stratify,
-                       "L0[A0==abar[1],,drop=FALSE]",
-                       "cbind(L0,A0)"
+                       "train_L0[train_A0==abar[1],,drop=FALSE]",
+                       "cbind(train_L0,train_A0)"
                 )
             ))), 
             newX = eval(parse(text=paste0(
                 ifelse(stratify,
-                       "L0",
-                       "cbind(L0,A0=abar[1])"
+                       "valid_L0",
+                       "cbind(valid_L0,A0=abar[1])"
                 )
             ))),
-            SL.library=SL.Q,
-            obsWeights = rep(1, ifelse(stratify, length(Q2n[A0==abar[1]]),length(Q2n))),
-            verbose=verbose), SL.Q.options
+            SL.library = SL.Q,
+            obsWeights = rep(1, ifelse(stratify, length(train_Q2n[train_A0==abar[1]]),length(train_Q2n))),
+            verbose = verbose), SL.Q.options
         ))
         if(multiAlgos){
             # Super Learner predictions
@@ -135,16 +165,16 @@ estimateQ <- function(
         #-------
         Q2mod <- do.call("glm", c(list(formula = as.formula(paste0(
             ifelse(stratify,
-                   "L2[A0==abar[1] & A1==abar[2]] ~",
-                   "L2 ~"
+                   "train_L2[train_A0==abar[1] & train_A1==abar[2]] ~",
+                   "train_L2 ~"
                    ),glm.Q)),
             data=eval(parse(text=paste0(
                 ifelse(stratify,
-                       "cbind(L0,L1)[A0==abar[1] & A1==abar[2],]",
-                       "cbind(L0,L1,A0)"
+                       "cbind(train_L0,train_L1)[train_A0==abar[1] & train_A1==abar[2],]",
+                       "cbind(train_L0,train_L1,train_A0)"
                        ))))), glm.Q.options))
         
-        Q2n <- predict(Q2mod, type="response", 
+        Q2n_all <- predict(Q2mod, type="response", 
                        newdata = eval(parse(text=paste0(
                            ifelse(stratify,
                                   "data.frame(L0, L1)",
@@ -154,28 +184,35 @@ estimateQ <- function(
         
         # replace extrapolated predictions with 
         # smallest/largest value
-        Q2n[Q2n < min(L2)] <- min(L2)
-        Q2n[Q2n > max(L2)] <- max(L2)
+        Q2n_all[Q2n_all < min(L2)] <- min(L2)
+        Q2n_all[Q2n_all > max(L2)] <- max(L2)
+        # on validation
+        Q2n <- Q2n_all[folds == validFold]
+        if(!all1){
+          train_Q2n <- Q2n_all[folds != validFold]
+        }else{
+          train_Q2n <- Q2n 
+        }
         
         #-------
         # Q1n
         #-------
         Q1mod <- do.call("glm", c(list(formula = as.formula(paste0(
             ifelse(stratify,
-                   "Q2n[A0==abar[1]] ~",
-                   "Q2n ~"
+                   "train_Q2n[train_A0==abar[1]] ~",
+                   "train_Q2n ~"
             ),glm.Q)),
             data = eval(parse(text=paste0(
                 ifelse(stratify,
-                       "L0[A0==abar[1],,drop=FALSE]",
-                       "cbind(L0,A0)"
+                       "train_L0[train_A0==abar[1],,drop=FALSE]",
+                       "cbind(train_L0,train_A0)"
                 ))))), glm.Q.options))
         
         Q1n <- predict(Q1mod, type="response", 
                        newdata = eval(parse(text=paste0(
                            ifelse(stratify,
-                                  "L0",
-                                  "data.frame(L0, A0 = abar[1])"
+                                  "valid_L0",
+                                  "data.frame(valid_L0, A0 = abar[1])"
                            ))))
         )
         

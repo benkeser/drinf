@@ -4,8 +4,8 @@
 \alias{redReg}
 \title{redReg}
 \usage{
-redReg(L2, A0, A1, Qn, gn, abar, verbose, return.models, SL.Qr, SL.gr, tolg,
-  ...)
+redReg(L2, A0, A1, Qn, gn, folds, validFold, abar, verbose, return.models,
+  SL.Qr, SL.gr, tolg, ...)
 }
 \value{
 A list with Qnr and gnr objects. See \code{estimateQr} and \code{estimategr}

@@ -4,8 +4,8 @@
 \alias{estimateQ}
 \title{estimateQ}
 \usage{
-estimateQ(L0, L1, L2, A0, A1, abar, SL.Q, SL.Q.options, glm.Q, glm.Q.options,
-  return.models, verbose, stratify, ...)
+estimateQ(validFold, folds, L0, L1, L2, A0, A1, abar, SL.Q, SL.Q.options, glm.Q,
+  glm.Q.options, return.models, verbose, stratify, ...)
 }
 \arguments{
 \item{L0}{A \code{data.frame} featuring covariates measured at baseline.}

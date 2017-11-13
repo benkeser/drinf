@@ -8,6 +8,8 @@
 #' @param L2 A \code{vector} outcome of interest
 #' @param A0 A \code{vector} treatment delivered at baseline.
 #' @param A1 A \code{vector} treatment deliver after \code{L1} is measured.
+#' @param folds Vector of cross-validation folds
+#' @param validFold Which fold is validation fold 
 #' @param abar A \code{vector} of length 2 indicating the treatment assignment 
 #' that is of interest. 
 #' @param stratify A \code{boolean} indicating whether to pool across treatment
@@ -37,10 +39,32 @@
 
 
 estimateQ1.ltmle <- function(
-    L2, Q2n, L0, A0, A1, abar, SL.Q, SL.Q.options, glm.Q, 
+    L2, Q2n, L0, A0, A1, folds, validFold, abar, SL.Q, SL.Q.options, glm.Q, 
     glm.Q.options, return.models, verbose, stratify, 
     ...
 ){
+    all1 <- all(folds == 1)
+    if(all1){
+        train_L0 <- valid_L0 <- L0
+        train_A0 <- valid_A0 <- A0
+        train_A1 <- valid_A1 <- A1
+        train_L2 <- valid_L2 <- L2
+        train_Q2n <- valid_Q2n <- Q2n
+    }else{
+        # training data
+        train_L0 <- L0[folds != validFold, , drop = FALSE]
+        train_Q2n <- Q2n[folds != validFold]
+        train_A0 <- A0[folds != validFold]
+        train_A1 <- A1[folds != validFold]
+        train_L2 <- L2[folds != validFold]
+
+        # validation data
+        valid_L0 <- L0[folds == validFold, , drop = FALSE]
+        valid_Q2n <- Q2n[folds == validFold]
+        valid_A0 <- A0[folds == validFold]
+        valid_A1 <- A1[folds == validFold]
+        valid_L2 <- L2[folds == validFold]
+    }
     if(is.null(SL.Q) & is.null(glm.Q)){ 
         stop("Specify Super Learner library or GLM formula for g")
     }
@@ -58,24 +82,24 @@ estimateQ1.ltmle <- function(
         Q1mod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Q),args = c(list(
             Y=eval(parse(text=paste0(
                 ifelse(stratify,
-                       "Q2n[A0==abar[1]]",
-                       "Q2n"
+                       "train_Q2n[train_A0==abar[1]]",
+                       "train_Q2n"
                 )
             ))), 
             X=eval(parse(text=paste0(
                 ifelse(stratify,
-                       "L0[A0==abar[1],,drop=FALSE]",
-                       "cbind(L0,A0)"
+                       "train_L0[train_A0==abar[1],,drop=FALSE]",
+                       "cbind(train_L0,train_A0)"
                 )
             ))), 
             newX = eval(parse(text=paste0(
                 ifelse(stratify,
-                       "L0",
-                       "cbind(L0,A0=abar[1])"
+                       "valid_L0",
+                       "cbind(valid_L0,A0=abar[1])"
                 )
             ))),
             SL.library=SL.Q,
-            obsWeights = rep(1, ifelse(stratify, length(Q2n[A0==abar[1]]),length(Q2n))),
+            obsWeights = rep(1, ifelse(stratify, length(train_Q2n[train_A0==abar[1]]),length(train_Q2n))),
             verbose=verbose), SL.Q.options
         ))
         if(multiAlgos){
@@ -97,20 +121,20 @@ estimateQ1.ltmle <- function(
         #-------
         Q1mod <- do.call("glm", c(list(formula = as.formula(paste0(
             ifelse(stratify,
-                   "Q2n[A0==abar[1]] ~",
-                   "Q2n ~"
+                   "train_Q2n[train_A0==abar[1]] ~",
+                   "train_Q2n ~"
             ),glm.Q)),
             data = eval(parse(text=paste0(
                 ifelse(stratify,
-                       "L0[A0==abar[1],,drop=FALSE]",
-                       "cbind(L0,A0)"
+                       "train_L0[train_A0==abar[1],,drop=FALSE]",
+                       "cbind(train_L0,train_A0)"
                 ))))), glm.Q.options))
         
         Q1n <- predict(Q1mod, type="response", 
                        newdata = eval(parse(text=paste0(
                            ifelse(stratify,
-                                  "L0",
-                                  "data.frame(L0, A0 = abar[1])"
+                                  "valid_L0",
+                                  "data.frame(valid_L0, train_A0 = abar[1])"
                            ))))
         )
         
@@ -126,8 +150,7 @@ estimateQ1.ltmle <- function(
     # don't like the output when do.call is used in call
     Q1mod$call <- NULL
     
-    out <- list(Q1n = Q1n, 
-                Q2mod = NULL, Q1mod = NULL)
+    out <- list(Q1n = Q1n, Q1mod = NULL)
     if(return.models){
         out$Q1mod <- Q1mod
     }
