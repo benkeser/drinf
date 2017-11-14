@@ -70,6 +70,7 @@ estimateQr <- function(
         obsWeights = rep(1, length(train_g1n[train_A0==abar[1]])),
         family = gaussian(),
         SL.library=SL.Qr,
+        method = "method.CC_LS",
         verbose=verbose))
     # empty vector of predictions
     Q2nr.obsa <- rep(NA, length(valid_A0))
@@ -105,6 +106,7 @@ estimateQr <- function(
         SL.library=SL.Qr,
         obsWeights = rep(1, length(train_g0n)),
         family = gaussian(),
+        method = "method.CC_LS",
         verbose = verbose))
     if(multiAlgos){
         weightfail <- all(Q1r1mod$coef==0)
@@ -125,27 +127,28 @@ estimateQr <- function(
     # Q1nr2
     # = A0*A1 / g1n * (L2 - Q2n) ~ g0n 
     #------
-    Q1r1mod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Qr),args=list(
+    Q1r2mod <- do.call(ifelse(multiAlgos,getFromNamespace("SuperLearner","SuperLearner"),SL.Qr),args=list(
         Y = rQ1_2, # fit using all obs. 
         X = data.frame(g0n = train_g0n),
         newX = data.frame(g0n = valid_g0n),
         SL.library = SL.Qr,
         obsWeights = rep(1, length(train_g0n)),
         family = gaussian(),
+        method = "method.CC_LS",
         verbose=verbose))
     if(multiAlgos){
-        weightfail <- all(Q1r1mod$coef==0)
+        weightfail <- all(Q1r2mod$coef==0)
         if(!weightfail){
             # Super Learner predictions for A0==abar[1] obs. 
-            Q1nr2 <- Q1r1mod$SL.predict
+            Q1nr2 <- Q1r2mod$SL.predict
         }else{
             # find dsl
-            dslcol <- which(Q1r1mod$cvRisk == min(Q1r1mod$cvRisk, na.rm = TRUE))
+            dslcol <- which(Q1r2mod$cvRisk == min(Q1r2mod$cvRisk, na.rm = TRUE))
             # use discrete Super Learner predictions
-            Q1nr2 <- Q1r1mod$library.predict[,dslcol]
+            Q1nr2 <- Q1r2mod$library.predict[,dslcol]
         }
     }else{
-        Q1nr2 <- Q1r1mod$pred
+        Q1nr2 <- Q1r2mod$pred
     }
     #--------
     # return
