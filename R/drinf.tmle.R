@@ -234,7 +234,7 @@ drinf.tmle <- function(L0, L1, L2,
         sqrt_n_max_block <- n_max_block <- FALSE
         sqrt_n_norm_block <- n_norm_block <- FALSE
         sqrt_n_max_iter <- sqrt_n_norm_iter <- n_norm_iter <- n_max_iter <- maxIter
-        while(max(abs(meanif.dr)) > tolIF & sqrt(sum(meanif.dr^2)) > tolIF & 
+        while((max(abs(meanif.dr)) > tolIF | sqrt(sum(meanif.dr^2)) > tolIF) & 
                 iter < maxIter){
             iter <- iter + 1
 
