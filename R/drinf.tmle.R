@@ -162,7 +162,11 @@ drinf.tmle <- function(L0, L1, L2,
         gnstar_list <- gn_list
         full_Qnstar <- do.call(Map, c(c, Qnstar_list))
         full_gnstar <- do.call(Map, c(c, gnstar_list))
-        full_Qnr.gnr <- do.call(Map, c(c, Qnr.gnr_list))
+        tmp <- do.call(Map, c(c, Qnr.gnr_list))
+        full_Qnr.gnr <- vector(mode = "list")
+        full_Qnr.gnr$Qnr <- sapply(unique(names(tmp$Qnr)), function(x) unname(unlist(tmp$Qnr[names(tmp$Qnr)==x])), simplify=FALSE)
+        full_Qnr.gnr$gnr <- sapply(unique(names(tmp$gnr)), function(x) unname(unlist(tmp$gnr[names(tmp$gnr)==x])), simplify=FALSE)
+
         est.naive <- mean(full_Qnstar$Q1n)
         # flucOrd is a vector of functions to call in sequence to 
         # perform the targeting.
@@ -314,7 +318,10 @@ drinf.tmle <- function(L0, L1, L2,
             #-------------------------
             full_Qnstar <- do.call(Map, c(c, Qnstar_list))
             full_gnstar <- do.call(Map, c(c, gnstar_list))
-            full_Qnr.gnr <- do.call(Map, c(c, Qnr.gnr_list))
+            tmp <- do.call(Map, c(c, Qnr.gnr_list))
+            full_Qnr.gnr <- vector(mode = "list")
+            full_Qnr.gnr$Qnr <- sapply(unique(names(tmp$Qnr)), function(x) unname(unlist(tmp$Qnr[names(tmp$Qnr)==x])), simplify=FALSE)
+            full_Qnr.gnr$gnr <- sapply(unique(names(tmp$gnr)), function(x) unname(unlist(tmp$gnr[names(tmp$gnr)==x])), simplify=FALSE)
 
             if.dr <- evaluateIF(
                 A0 = A0, A1 = A1, L2 = L2, 

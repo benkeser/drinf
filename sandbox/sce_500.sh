@@ -22,14 +22,14 @@
 
 ##################### Change these constants ##############################
 
-ANALYSIS='sub_test_2'      # change for every analysis you run (2nd arg)
+ANALYSIS='new_500_v1'      # change for every analysis you run (2nd arg)
 MAILDOM='@fhcrc.org'   # your email domain (for receiving error messages)
 MAXARRAYSIZE=1000          # set to 0 if you are not using slurm job arrays
 MYSCRATCH="./scratch"  # location of your persistent scratch dir
 PARTITION='restart'        # the queue on your cluster that allows short jobs
 RESULTDIR="./out"  # This is a folder in permanent storage
 SCRIPT='./cent_500.R'      # your code as (R or Python) script (1st arg)
-STEPSIZE=1               # number of consecutive loops in SCRIPT to run in
+STEPSIZE=20             # number of consecutive loops in SCRIPT to run in
                            # the same job / node (increase for short jobs)
                            # MAXARRAYSIZE MUST be divisible by STEPSIZE
 

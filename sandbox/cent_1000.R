@@ -93,16 +93,38 @@ if (args[1] == 'run') {
     SL.gr = c("SL.gam","SL.glm","SL.mean"),
     flucOrd = c("targetg0","targetg1","redReg",
                "targetQ2","targetQ1","redReg"),
+    # flucOrd = c("targetQg", "redReg"),
     return.models = FALSE,
-    verbose = TRUE,
+    verbose = FALSE,
     maxIter = 25,
     return.ltmle = TRUE,
     allatonce = FALSE,
-    tolg = 1e-2,
+    tolg = 2.5e-2,
     tolQ = 1e-2, stratify = TRUE
     )
     )
-    drtmle_ci <- rep(object$est,2) + c(-1.96, 1.96) * rep(object$se,2)
+    # drtmle with max(if) < 1/n stopping criteria
+    # drtmle_ci <- rep(object$est,2) + c(-1.96, 1.96) * rep(object$se,2)
+    # drtmle with norm(if) < 1/n stopping criteria
+    drtmle_norm_n <- object$est_trace[object$n_norm_iter]
+    se_drtmle_norm_n <- object$se_trace[object$n_norm_iter]
+    drtmle_norm_n_ci <- rep(drtmle_norm_n,2) + c(-1.96, 1.96) * rep(se_drtmle_norm_n,2)
+    # drtmle with norm(if) < 1/sqrt(n) stopping criteria
+    drtmle_norm_sqrt_n <- object$est_trace[object$sqrt_n_norm_iter]
+    se_drtmle_norm_sqrt_n <- object$se_trace[object$sqrt_n_norm_iter]
+    drtmle_norm_sqrt_n_ci <- rep(drtmle_norm_sqrt_n,2) + c(-1.96, 1.96) * rep(se_drtmle_norm_sqrt_n,2)
+    
+    # drtmle with max(if) < 1/sqrt(n) stopping criteria
+    drtmle_max_sqrt_n <- object$est_trace[object$sqrt_n_max_iter]
+    se_drtmle_max_sqrt_n <- object$se_trace[object$sqrt_n_max_iter]
+    drtmle_max_sqrt_n_ci <- rep(drtmle_max_sqrt_n,2) + c(-1.96, 1.96) * rep(se_drtmle_max_sqrt_n,2)
+    
+    # drtmle with max(if) < 1/n stopping criteria
+    drtmle_max_n <- object$est_trace[object$n_max_iter]
+    se_drtmle_max_n <- object$se_trace[object$n_max_iter]
+    drtmle_max_n_ci <- rep(drtmle_max_n,2) + c(-1.96, 1.96) * rep(se_drtmle_max_n,2)
+    
+    drtmle_ci_trace <- rep(object$est_trace,2) + c(rep(-1.96, 25), rep(1.96, 25)) * rep(object$se_trace, 2)
     ltmle_ci <- rep(object$est.ltmle,2) + c(-1.96, 1.96) * rep(object$se.ltmle,2)
 
     # computed locally
@@ -115,13 +137,23 @@ if (args[1] == 'run') {
     # drtmle meanIC
     out <- c(parm$seed[i], parm$n[i], truth, 
              parm$Q[i], parm$g[i],
-             object$est, drtmle_ci,
-             object$est_trace, # tmles with maxIter 1:10
+             drtmle_max_n, drtmle_max_n_ci,
+             as.numeric(drtmle_max_n_ci[1] < truth & drtmle_max_n_ci[2] > truth),
+             drtmle_max_sqrt_n, drtmle_max_sqrt_n_ci,
+             as.numeric(drtmle_max_sqrt_n_ci[1] < truth & drtmle_max_sqrt_n_ci[2] > truth),
+             drtmle_norm_n, drtmle_norm_n_ci,
+             as.numeric(drtmle_norm_n_ci[1] < truth & drtmle_norm_n_ci[2] > truth),
+             drtmle_norm_sqrt_n, drtmle_norm_sqrt_n_ci,
+             as.numeric(drtmle_norm_sqrt_n_ci[1] < truth & drtmle_norm_sqrt_n_ci[2] > truth),
+             object$est_trace, # tmles with maxIter 1:25
              object$se_trace,
-             as.numeric(drtmle_ci[1] < truth & drtmle_ci[2] > truth),
+             # add confidence intervals for other estimators 
              object$est.ltmle, ltmle_ci,
              as.numeric(ltmle_ci[1] < truth & ltmle_ci[2] > truth),
-             object$iter, unlist(object$ic))
+             object$iter, object$sqrt_n_max_iter, object$n_max_iter,
+             object$n_norm_iter, object$sqrt_n_norm_iter,
+             unlist(object$ic))
+
 
     # save output 
     save(out, file = paste0("~/drinf/out/out_n=",

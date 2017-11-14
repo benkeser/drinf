@@ -138,13 +138,16 @@ if (args[1] == 'run') {
     out <- c(parm$seed[i], parm$n[i], truth, 
              parm$Q[i], parm$g[i],
              drtmle_max_n, drtmle_max_n_ci,
+             as.numeric(drtmle_max_n_ci[1] < truth & drtmle_max_n_ci[2] > truth),
              drtmle_max_sqrt_n, drtmle_max_sqrt_n_ci,
+             as.numeric(drtmle_max_sqrt_n_ci[1] < truth & drtmle_max_sqrt_n_ci[2] > truth),
              drtmle_norm_n, drtmle_norm_n_ci,
+             as.numeric(drtmle_norm_n_ci[1] < truth & drtmle_norm_n_ci[2] > truth),
              drtmle_norm_sqrt_n, drtmle_norm_sqrt_n_ci,
+             as.numeric(drtmle_norm_sqrt_n_ci[1] < truth & drtmle_norm_sqrt_n_ci[2] > truth),
              object$est_trace, # tmles with maxIter 1:25
              object$se_trace,
              # add confidence intervals for other estimators 
-             as.numeric(drtmle_ci[1] < truth & drtmle_ci[2] > truth),
              object$est.ltmle, ltmle_ci,
              as.numeric(ltmle_ci[1] < truth & ltmle_ci[2] > truth),
              object$iter, object$sqrt_n_max_iter, object$n_max_iter,
@@ -185,7 +188,7 @@ if (args[1] == 'merge') {
     parm$g[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
     parm$Q[(parm$g == "SL.glm.interaction" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
 
-    rslt <- matrix(NA, nrow = nrow(parm), ncol = 17 + 25*2 + 17 + 25*2 - 5)
+    rslt <- matrix(NA, nrow = nrow(parm), ncol = 83*2 - 5)
     for(i in 1:nrow(parm)){
         tmp_1 <- tryCatch({
             load(paste0("~/drinf/out/out_n=",
@@ -194,7 +197,7 @@ if (args[1] == 'merge') {
                        "_cvFolds=1.RData"))
             out
         }, error=function(e){
-          rep(NA,17 + 25*2)
+          rep(NA, 83)
         })
         tmp_5 <- tryCatch({
             load(paste0("~/drinf/out/out_n=",
@@ -203,19 +206,22 @@ if (args[1] == 'merge') {
                        "_cvFolds=5.RData"))
             out[-(1:5)]
         }, error=function(e){
-          rep(NA, 17 + 25*2 - 5)
+          rep(NA, 83 - 5)
         })
         tmp <- c(tmp_1, tmp_5)
         rslt[i,] <- tmp
     }
     # format
     out <- data.frame(rslt)
-    sim_names <- c("drtmle", "drtmle_cil","drtmle_ciu",
-                       paste0("drtmle_maxIter",1:25),
-                       paste0("se_drtmle_maxIter",1:25),
-                       "drtmle_cov",
-                       "ltmle","ltmle_cil","ltmle_ciu","ltmle_cov",
-                       "drtmle_iter", "origIC","missQIC","missgIC")
+    sim_names <- c(paste0("max_n_", c("est","cil","ciu","cov")),
+                   paste0("max_sqrt_n_", c("est","cil","ciu","cov")),
+                   paste0("norm_n_", c("est","cil","ciu","cov")),
+                   paste0("norm_sqrt_n_", c("est","cil","ciu","cov")),
+                   paste0("drtmle_maxIter",1:25),
+                   paste0("se_drtmle_maxIter",1:25),
+                   "ltmle","ltmle_cil","ltmle_ciu","ltmle_cov",
+                   paste0(c("total_","sqrt_n_max_","n_max_","n_norm_","sqrt_n_norm_")),
+                   "origIC","missQIC","missgIC")
     colnames(out) <- c("seed","n","truth","Q","g", sim_names,
                        paste0("cv_", sim_names))
 
