@@ -230,8 +230,33 @@ drinf.tmle <- function(L0, L1, L2,
         #-----------------------------------
         iter <- 0
         meanif.dr <- Inf
-        while(max(abs(meanif.dr)) > tolIF & iter < maxIter){
+        n_minus_12 <- length(L2)^(-1/2)
+        sqrt_n_max_block <- n_max_block <- FALSE
+        sqrt_n_norm_block <- n_norm_block <- FALSE
+        while(max(abs(meanif.dr)) > tolIF & sqrt(sum(meanif.dr^2)) > tolIF & 
+                iter < maxIter){
             iter <- iter + 1
+
+            if(max(abs(meanif.dr)) < n_minus_12 & !sqrt_n_max_block){
+                sqrt_n_max_iter <- iter
+                sqrt_n_max_block <- TRUE # so it doesn't reset 
+            }
+
+            if(sqrt(sum(meanif.dr^2)) < n_minus_12 & !sqrt_n_norm_block){
+                sqrt_n_norm_iter <- iter
+                sqrt_n_norm_block <- TRUE
+            }
+
+            if(sqrt(sum(meanif.dr^2)) < tolIF & !n_norm_block){
+                n_norm_iter <- iter
+                n_norm_block <- TRUE
+            }
+            
+            if(max(abs(meanif.dr)) < tolIF & !n_max_block){
+                n_max_iter <- iter
+                n_max_block <- TRUE
+            }
+            
             #-----------------------------------------
             # compute reduced dimension regressions
             #----------------------------------------
@@ -574,6 +599,11 @@ drinf.tmle <- function(L0, L1, L2,
     
     # number of iterations
     out$iter <- iter
+    out$sqrt_n_max_iter <- sqrt_n_max_iter
+    out$n_max_iter <- n_max_iter
+    out$sqrt_n_norm_iter <- sqrt_n_norm_iter
+    out$n_norm_iter <- n_norm_iter
+
     if(universal) out$badSteps <- badSteps
     # model output
     out$Qmod <- vector(mode = "list")

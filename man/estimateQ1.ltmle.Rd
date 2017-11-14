@@ -4,8 +4,8 @@
 \alias{estimateQ1.ltmle}
 \title{estimateQ1.ltmle}
 \usage{
-estimateQ1.ltmle(L2, Q2n, L0, A0, A1, abar, SL.Q, SL.Q.options, glm.Q,
-  glm.Q.options, return.models, verbose, stratify, ...)
+estimateQ1.ltmle(L2, Q2n, L0, A0, A1, folds, validFold, abar, SL.Q,
+  SL.Q.options, glm.Q, glm.Q.options, return.models, verbose, stratify, ...)
 }
 \arguments{
 \item{L2}{A \code{vector} outcome of interest}
@@ -15,6 +15,10 @@ estimateQ1.ltmle(L2, Q2n, L0, A0, A1, abar, SL.Q, SL.Q.options, glm.Q,
 \item{A0}{A \code{vector} treatment delivered at baseline.}
 
 \item{A1}{A \code{vector} treatment deliver after \code{L1} is measured.}
+
+\item{folds}{Vector of cross-validation folds}
+
+\item{validFold}{Which fold is validation fold}
 
 \item{abar}{A \code{vector} of length 2 indicating the treatment assignment 
 that is of interest.}
