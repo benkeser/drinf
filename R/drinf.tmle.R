@@ -238,25 +238,6 @@ drinf.tmle <- function(L0, L1, L2,
                 iter < maxIter){
             iter <- iter + 1
 
-            if(max(abs(meanif.dr)) < n_minus_12 & !sqrt_n_max_block){
-                sqrt_n_max_iter <- iter
-                sqrt_n_max_block <- TRUE # so it doesn't reset 
-            }
-
-            if(sqrt(sum(meanif.dr^2)) < n_minus_12 & !sqrt_n_norm_block){
-                sqrt_n_norm_iter <- iter
-                sqrt_n_norm_block <- TRUE
-            }
-
-            if(sqrt(sum(meanif.dr^2)) < tolIF & !n_norm_block){
-                n_norm_iter <- iter
-                n_norm_block <- TRUE
-            }
-            
-            if(max(abs(meanif.dr)) < tolIF & !n_max_block){
-                n_max_iter <- iter
-                n_max_block <- TRUE
-            }
             
             #-----------------------------------------
             # compute reduced dimension regressions
@@ -355,6 +336,26 @@ drinf.tmle <- function(L0, L1, L2,
                 # extra terms targeting Q's
                 t(matrix(c(1,1,1)))%*%colMeans(Reduce("cbind",if.dr[6:8]))
             )
+
+            if(max(abs(meanif.dr)) < n_minus_12 & !sqrt_n_max_block){
+                sqrt_n_max_iter <- iter
+                sqrt_n_max_block <- TRUE # so it doesn't reset 
+            }
+
+            if(sqrt(sum(meanif.dr^2)) < n_minus_12 & !sqrt_n_norm_block){
+                sqrt_n_norm_iter <- iter
+                sqrt_n_norm_block <- TRUE
+            }
+
+            if(sqrt(sum(meanif.dr^2)) < tolIF & !n_norm_block){
+                n_norm_iter <- iter
+                n_norm_block <- TRUE
+            }
+            
+            if(max(abs(meanif.dr)) < tolIF & !n_max_block){
+                n_max_iter <- iter
+                n_max_block <- TRUE
+            }
 
             # update iteration
             psin_trace[iter] <- mean(full_Qnstar$Q1n)
