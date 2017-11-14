@@ -198,8 +198,11 @@ targetQg <- function(
     #------------------------------------------------------------
     # first n entries are g0nstar
     g0nstar <- etastar[1:n]
+    g0nstar[g0nstar < tolg] <- tolg
     # next n entries are g1nstar
     g1nstar <- etastar[(n+1):(2*n)]
+    g1nstar[g1nstar < tolg] <- tolg
+
     # next n entries are Q1nstar, transform back to original scale
     Q1nstar <- etastar[(2*n+1):(3*n)]*(L2.max - L2.min) + L2.min
     # next n entries are Q2nstar, transform back to original scale
