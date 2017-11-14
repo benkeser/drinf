@@ -98,9 +98,9 @@ targetQg <- function(
     # the new "clever covariates" for g
     flucCov3 <- c(
         # the term for targeting g0n
-        Qnr.gnr$Qnr$Q1nr / gn$g0n,
+        (Qnr.gnr$Qnr$Q1nr1 + Qnr.gnr$Qnr$Q1nr2) / gn$g0n^2,
         # the term for targeting g1n 
-        Qnr.gnr$Qnr$Q2nr.obsa / gn$g1n, 
+        Qnr.gnr$Qnr$Q2nr.obsa / gn$g1n^2, 
         rep(0,n),
         rep(0,n)
     )
@@ -128,8 +128,8 @@ targetQg <- function(
     )
     
     predCov3 <- c(
-        Qnr.gnr$Qnr$Q1nr / gn$g0n, # no need to change this one
-        Qnr.gnr$Qnr$Q2nr.seta / gn$g1n, # this one is set to Q2nr(abar[1], \bar{L}_1)
+        (Qnr.gnr$Qnr$Q1nr1 + Qnr.gnr$Qnr$Q1nr2) / gn$g0n^2, # no need to change this one
+        Qnr.gnr$Qnr$Q2nr.seta / gn$g1n^2, # this one is set to Q2nr(abar[1], \bar{L}_1)
         rep(0,n), rep(0,n)
     )
     #-------------------------------------------
@@ -156,6 +156,8 @@ targetQg <- function(
                 type = "response"
             )
         }else{
+            flucCov <- c(flucCov1, flucCov2, flucCov3)
+            predCov <- c(predCov1, predCov2, predCov3)
             # first do g's
             flucmodg <- suppressWarnings(glm(
                 formula = "out ~ -1 + offset(fo) + fc",
@@ -177,7 +179,7 @@ targetQg <- function(
             etastar <- c(
                 predict(flucmodg, newdata = data.frame(out = 0, fo = flucOff[1:(2*n)], fc = predCov[1:(2*n)]),
                         type = "response"),
-                predict(flucmodg, newdata = data.frame(out = 0, fo = flucOff[(2*n+1):(4*n)], fc = predCov[(2*n+1):(4*n)]),
+                predict(flucmodQ, newdata = data.frame(out = 0, fo = flucOff[(2*n+1):(4*n)], fc = predCov[(2*n+1):(4*n)]),
                         type = "response")
             )
         }

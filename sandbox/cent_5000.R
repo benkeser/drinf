@@ -18,7 +18,7 @@ if(length(args) < 1){
   stop("Not enough arguments. Please use args 'listsize', 'prepare', 'run <itemsize>' or 'merge'")
 }
 
-ns <- c(500)
+ns <- c(5000)
 bigB <- 1000
 g <- c("SL.hal9001","SL.glm")
 Q <- c("SL.hal9001","SL.glm")
@@ -98,7 +98,7 @@ if (args[1] == 'run') {
     maxIter = 25,
     return.ltmle = TRUE,
     allatonce = FALSE,
-    tolg = 5e-2,
+    tolg = 1e-2,
     tolQ = 1e-2, stratify = TRUE
     )
     )
@@ -116,7 +116,8 @@ if (args[1] == 'run') {
     out <- c(parm$seed[i], parm$n[i], truth, 
              parm$Q[i], parm$g[i],
              object$est, drtmle_ci,
-             object$est_trace, # tmles with maxIter 1:10
+             object$est_trace, # tmles with maxIter 1:25
+             object$se_trace, # standard errors with maxIter 1:25
              as.numeric(drtmle_ci[1] < truth & drtmle_ci[2] > truth),
              object$est.ltmle, ltmle_ci,
              as.numeric(ltmle_ci[1] < truth & ltmle_ci[2] > truth),
@@ -140,50 +141,50 @@ if (args[1] == 'run') {
 
 # merge job ###########################
 if (args[1] == 'merge') {   
-    ns <- c(500, 1000, 5000)
-    bigB <- 1000
-    g <- c("SL.hal9001","SL.glm")
-    Q <- c("SL.hal9001","SL.glm")
-    # g <- c("SL.glm.interaction")
-    # Q <- c("SL.glm.interaction")
-    parm <- expand.grid(seed=1:bigB,
-                        n=ns, g = g, Q = Q,
-                        stringsAsFactors = FALSE)
-    rslt <- NULL
-    for(i in 1:nrow(parm)){
-        tmp_1 <- tryCatch({
-            load(paste0("~/drinf/out/out_n=",
-                        parm$n[i],"_seed=",parm$seed[i],
-                       "_Q=",parm$Q[i],"_g=",parm$g[i],
-                       "_cvFolds=1.RData"))
-            out
-        }, error=function(e){
-          rep(NA,17 + 25)
-        })
-        tmp_5 <- tryCatch({
-            load(paste0("~/drinf/out/out_n=",
-                        parm$n[i],"_seed=",parm$seed[i],
-                       "_Q=",parm$Q[i],"_g=",parm$g[i],
-                       "_cvFolds=5.RData"))
-            out[-(1:5)]
-        }, error=function(e){
-          rep(NA, 17 + 25 - 5)
-        })
-        tmp <- c(tmp_1, tmp_5)
-        rslt <- rbind(rslt, tmp)
-    }
-    # format
-    out <- data.frame(rslt)
-    sim_names <- c("drtmle", "drtmle_cil","drtmle_ciu",
-                       paste0("drtmle_maxIter",1:10),
-                       "drtmle_cov",
-                       "ltmle","ltmle_cil","ltmle_ciu","ltmle_cov",
-                       "drtmle_iter", "origIC","missQIC","missgIC")
-    colnames(out) <- c("seed","n","truth","Q","g", sim_names,
-                       paste0("cv_", sim_names))
+    # ns <- c(500, 1000, 5000)
+    # bigB <- 1000
+    # g <- c("SL.hal9001","SL.glm")
+    # Q <- c("SL.hal9001","SL.glm")
+    # # g <- c("SL.glm.interaction")
+    # # Q <- c("SL.glm.interaction")
+    # parm <- expand.grid(seed=1:bigB,
+    #                     n=ns, g = g, Q = Q,
+    #                     stringsAsFactors = FALSE)
+    # rslt <- NULL
+    # for(i in 1:nrow(parm)){
+    #     tmp_1 <- tryCatch({
+    #         load(paste0("~/drinf/out/out_n=",
+    #                     parm$n[i],"_seed=",parm$seed[i],
+    #                    "_Q=",parm$Q[i],"_g=",parm$g[i],
+    #                    "_cvFolds=1.RData"))
+    #         out
+    #     }, error=function(e){
+    #       rep(NA,17 + 25*2)
+    #     })
+    #     tmp_5 <- tryCatch({
+    #         load(paste0("~/drinf/out/out_n=",
+    #                     parm$n[i],"_seed=",parm$seed[i],
+    #                    "_Q=",parm$Q[i],"_g=",parm$g[i],
+    #                    "_cvFolds=5.RData"))
+    #         out[-(1:5)]
+    #     }, error=function(e){
+    #       rep(NA, 17 + 25*2 - 5)
+    #     })
+    #     tmp <- c(tmp_1, tmp_5)
+    #     rslt <- rbind(rslt, tmp)
+    # }
+    # # format
+    # out <- data.frame(rslt)
+    # sim_names <- c("drtmle", "drtmle_cil","drtmle_ciu",
+    #                    paste0("drtmle_maxIter",1:10),
+    #                    "drtmle_cov",
+    #                    "ltmle","ltmle_cil","ltmle_ciu","ltmle_cov",
+    #                    "drtmle_iter", "origIC","missQIC","missgIC")
+    # colnames(out) <- c("seed","n","truth","Q","g", sim_names,
+    #                    paste0("cv_", sim_names))
 
-    out[,(1:ncol(out))[c(-4,-5)]] <- apply(out[,(1:ncol(out))[c(-4,-5)]], 2, as.numeric)
-    save(out, file=paste0('~/drinf/out/allOut_pluscv.RData'))
+    # out[,(1:ncol(out))[c(-4,-5)]] <- apply(out[,(1:ncol(out))[c(-4,-5)]], 2, as.numeric)
+    # save(out, file=paste0('~/drinf/out/allOut_pluscv.RData'))
 
     # # post processing
     # getBias <- function(out, n, Q, g){

@@ -91,18 +91,20 @@ if (args[1] == 'run') {
     cvFolds = parm$cv[i],
     SL.Qr = "SL.gam",
     SL.gr = "SL.gam",
-    flucOrd = c("targetg0","targetg1","redReg",
-               "targetQ2","targetQ1","redReg"),
+    # flucOrd = c("targetg0","targetg1","redReg",
+    #            "targetQ2","targetQ1","redReg"),
+    flucOrd = c("targetQg", "redReg"),
     return.models = FALSE,
     verbose = TRUE,
     maxIter = 25,
     return.ltmle = TRUE,
     allatonce = FALSE,
-    tolg = 5e-2,
+    tolg = 1e-2,
     tolQ = 1e-2, stratify = TRUE
     )
     )
     drtmle_ci <- rep(object$est,2) + c(-1.96, 1.96) * rep(object$se,2)
+    drtmle_ci_trace <- rep(object$est_trace,2) + c(rep(-1.96, 25), rep(1.96, 25)) * rep(object$se_trace, 2)
     ltmle_ci <- rep(object$est.ltmle,2) + c(-1.96, 1.96) * rep(object$se.ltmle,2)
 
     # computed locally
@@ -117,6 +119,7 @@ if (args[1] == 'run') {
              parm$Q[i], parm$g[i],
              object$est, drtmle_ci,
              object$est_trace, # tmles with maxIter 1:10
+             object$se_trace,
              as.numeric(drtmle_ci[1] < truth & drtmle_ci[2] > truth),
              object$est.ltmle, ltmle_ci,
              as.numeric(ltmle_ci[1] < truth & ltmle_ci[2] > truth),
@@ -140,16 +143,23 @@ if (args[1] == 'run') {
 
 # merge job ###########################
 if (args[1] == 'merge') {   
-    ns <- c(500, 1000, 5000)
+    ns <- c(500,1000,5000)
     bigB <- 1000
     g <- c("SL.hal9001","SL.glm")
     Q <- c("SL.hal9001","SL.glm")
+    # cv <- c(1,5)
     # g <- c("SL.glm.interaction")
     # Q <- c("SL.glm.interaction")
     parm <- expand.grid(seed=1:bigB,
-                        n=ns, g = g, Q = Q,
+                        n=ns, g = g, Q = Q, 
                         stringsAsFactors = FALSE)
-    rslt <- NULL
+    # n = 500 => up to 49 seconds => get about 20 done per run
+    # n = 1000 => up to 147 seconds = 2.5 minutes => get about 10 done per run
+    # n = 5000 => just do one per run
+    parm$g[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
+    parm$Q[(parm$g == "SL.glm.interaction" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
+
+    rslt <- matrix(NA, nrow = nrow(parm), ncol = 17 + 25*2 + 17 + 25*2 - 5)
     for(i in 1:nrow(parm)){
         tmp_1 <- tryCatch({
             load(paste0("~/drinf/out/out_n=",
@@ -158,7 +168,7 @@ if (args[1] == 'merge') {
                        "_cvFolds=1.RData"))
             out
         }, error=function(e){
-          rep(NA,17 + 25)
+          rep(NA,17 + 25*2)
         })
         tmp_5 <- tryCatch({
             load(paste0("~/drinf/out/out_n=",
@@ -167,15 +177,16 @@ if (args[1] == 'merge') {
                        "_cvFolds=5.RData"))
             out[-(1:5)]
         }, error=function(e){
-          rep(NA, 17 + 25 - 5)
+          rep(NA, 17 + 25*2 - 5)
         })
         tmp <- c(tmp_1, tmp_5)
-        rslt <- rbind(rslt, tmp)
+        rslt[i,] <- tmp
     }
     # format
     out <- data.frame(rslt)
     sim_names <- c("drtmle", "drtmle_cil","drtmle_ciu",
-                       paste0("drtmle_maxIter",1:10),
+                       paste0("drtmle_maxIter",1:25),
+                       paste0("se_drtmle_maxIter",1:25),
                        "drtmle_cov",
                        "ltmle","ltmle_cil","ltmle_ciu","ltmle_cov",
                        "drtmle_iter", "origIC","missQIC","missgIC")
@@ -185,62 +196,83 @@ if (args[1] == 'merge') {
     out[,(1:ncol(out))[c(-4,-5)]] <- apply(out[,(1:ncol(out))[c(-4,-5)]], 2, as.numeric)
     save(out, file=paste0('~/drinf/out/allOut_pluscv.RData'))
 
-    # # post processing
-    # getBias <- function(out, n, Q, g){
-    #   rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
-    #   bias <- by(rslt, rslt$n, function(x){
-    #     bias_drtmle <- mean(x$drtmle - x$truth, na.rm = TRUE)
-    #     bias_drtmle_1 <- mean(x$drtmle_maxIter1 - x$truth, na.rm = TRUE)
-    #     bias_ltmle <- mean(x$ltmle - x$truth, na.rm = TRUE)
-    #     c(nrow(x), bias_drtmle, bias_drtmle_1, bias_ltmle)
-    #   })
-    #   bias
-    # }
-    # getBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
-    # getBias(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
-    # getBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
-    # getBias(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
+    # post processing
+    getBias <- function(out, n, Q, g){
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
+      bias <- by(rslt, rslt$n, function(x){
+        bias_drtmle <- mean(x$drtmle - x$truth, na.rm = TRUE)
+        bias_cv_drtmle <- mean(x$cv_drtmle - x$truth, na.rm = TRUE)
+        bias_drtmle_1 <- mean(x$drtmle_maxIter1 - x$truth, na.rm = TRUE)
+        bias_cv_drtmle_1 <- mean(x$cv_drtmle_maxIter1 - x$truth, na.rm = TRUE)
+        bias_ltmle <- mean(x$ltmle - x$truth, na.rm = TRUE)
+        bias_cv_ltmle <- mean(x$cv_ltmle - x$truth, na.rm = TRUE)
+        list(nsim = nrow(x), drtmle = bias_drtmle, cv_drtmle = bias_cv_drtmle, 
+             drtmle_1 = bias_drtmle_1, cv_drtmle1 = bias_cv_drtmle_1, 
+             ltmle = bias_ltmle, cv_ltmle = bias_cv_ltmle)
+      })
+      bias
+    }
+    getBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
+    getBias(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
+    getBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+    getBias(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
 
-    # getRootNBias <- function(out, n, Q, g){
-    #   rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
-    #   rootn_bias <- by(rslt, rslt$n, function(x){
-    #     bias_drtmle <- sqrt(x$n[1])*mean(x$drtmle - x$truth, na.rm = TRUE)
-    #     bias_drtmle_1 <- mean(x$drtmle_maxIter1 - x$truth, na.rm = TRUE)        
-    #     bias_ltmle <- sqrt(x$n[1])*mean(x$ltmle - x$truth, na.rm = TRUE)
-    #     c(nrow(x), bias_drtmle, bias_drtmle_1, bias_ltmle)
-    #   })
-    #   rootn_bias
-    # }
-    # getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
-    # getRootNBias(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
-    # getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
-    # getRootNBias(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
+    getRootNBias <- function(out, n, Q, g, est = c("drtmle", "cv_drtmle", "drtmle_maxIter1", "cv_drtmle_maxIter1",
+                                                   "ltmle", "cv_ltmle")){
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
+      rootn_bias <- by(rslt, rslt$n, function(x){
+        o <- matrix(c(nrow(x), rep(NA, length(est))), nrow = 1)
+        ct <- 1
+        for(e in est){
+          # browser()
+          ct <- ct + 1
+          o[ct] <- sqrt(x$n[1])*mean(x[,e] - x$truth, na.rm = TRUE)
+        }
+        colnames(o) <- c("nsim", est)
+        o
+      })
+      ou <- Reduce(rbind, rootn_bias)
+      ou <- cbind(unique(rslt$n), ou)
+      ou
+    }
+    getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm",
+                 est = paste0("cv_drtmle_maxIter", 1:25))
+    getRootNBias(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm",
+                 est = paste0("cv_drtmle_maxIter", 1:25))
+    getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001",
+                 est = paste0("cv_drtmle_maxIter", 1:25))
+    getRootNBias(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction",
+                 est = paste0("cv_drtmle_maxIter", 1:25))
 
-    # getCov <- function(out, n, Q, g){
-    #   rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
-    #   cov <-  by(rslt, rslt$n, function(x){
-    #     cov_drtmle <- mean(x$drtmle_cov, na.rm = TRUE)
-    #     cov_ltmle <- mean(x$ltmle_cov, na.rm = TRUE)
-    #     c(cov_drtmle, cov_ltmle)
-    #   })
-    #   cov
-    # }
-    # getCov(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
-    # getCov(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
-    # getCov(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
-    # getCov(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
 
-    # getIC <- function(out, n, Q, g){
-    #   rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
-    #   ic <-  by(rslt, rslt$n, function(x){
-    #     colMeans(x[ , grepl("IC", colnames(x))])
-    #   })
-    #   ic
-    # }
-    # getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
-    # getIC(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
-    # getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
-    # getIC(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
+    getCov <- function(out, n, Q, g){
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
+      cov <-  by(rslt, rslt$n, function(x){
+        cov_drtmle <- mean(x$drtmle_cov, na.rm = TRUE)
+        cil <- x$drtmle - 1.96 * x$cv_se_drtmle_maxIter25
+        ciu <- x$drtmle + 1.96 * x$cv_se_drtmle_maxIter25
+        cov_drtmle_cv_se <- mean(cil < x$truth & ciu > x$truth)
+        cov_ltmle <- mean(x$ltmle_cov, na.rm = TRUE)
+        c(cov_drtmle, cov_drtmle_cv_se, cov_ltmle)
+      })
+      cov
+    }
+    getCov(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
+    getCov(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
+    getCov(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+    getCov(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
+
+    getIC <- function(out, n, Q, g){
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
+      ic <-  by(rslt, rslt$n, function(x){
+        colMeans(x[ , grepl("IC", colnames(x))])
+      })
+      ic
+    }
+    getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
+    getIC(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
+    getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+    getIC(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
 
 
 }
