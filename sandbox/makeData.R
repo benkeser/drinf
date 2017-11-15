@@ -88,15 +88,25 @@ predict.SL.hal9001 <- function(object, newdata, ...){
 makeData <- function(n = n){
     L0 <- data.frame(x.0 = runif(n,-2,2), x.1 = rbinom(n, 1, 1/2))
     A0 <- rbinom(n, 1, plogis(L0$x.0 - 2*L0$x.0*L0$x.1))
-    L1 <- data.frame(x.2 = L0$x.0*L0$x.1 + 0.2 * A0 + runif(n))
-    A1 <- rbinom(n, 1, plogis(L0$x.0 - 2*L0$x.0*L0$x.1 + 0.2*L1$x.2 - 0.1*A0))
-    L2 <- rnorm(n, L0$x.0 - 2*L0$x.0*L0$x.1 + L1$x.2 + A1 + A0)
+    L1 <- data.frame(x.2 = L0$x.0 - 2 * L0$x.0*L0$x.1 + 0.2 * A0 + runif(n))
+    A1 <- rbinom(n, 1, plogis(-L1$x.2 + 2*L1$x.2*L0$x.1 + 0.2*L0$x.0 - 0.1*A0))
+    L2 <- rnorm(n, - L0$x.0 + 2*L0$x.0*L0$x.1 - L1$x.2 + A1 + A0)
     return(list(L0 = L0, L1 = L1, L2 = L2, A0 = A0, A1 = A1))
 }
 
 getTruth <- function(n = 1e6, abar = c(1,1)){
-    L0 <- data.frame(x.0 = runif(n,-1,1), x.1 = rbinom(n, 1, 1/2))
-    L1 <- data.frame(x.2 = L0$x.0*L0$x.1 + 0.2 * abar[1] + runif(n))
-    L2 <- rnorm(n, L0$x.0 - 2*L0$x.0*L0$x.1 + L1$x.2 + abar[1] + abar[2])
+    L0 <- data.frame(x.0 = runif(n,-2,2), x.1 = rbinom(n, 1, 1/2))
+    L1 <- data.frame(x.2 = L0$x.0 - 2 * L0$x.0*L0$x.1 + 0.2 * abar[1] + runif(n))
+    L2 <- rnorm(n, - L0$x.0 + 2*L0$x.0*L0$x.1 - L1$x.2 + abar[1] + abar[2])
     return(mean(L2))
 }
+
+compare_stuff <- function(n = 1e6){
+    grbg <- makeData(n = n)
+    truth <- getTruth(n = n)
+    c(mean(grbg$L2[grbg$A0==1 & grbg$A1==1]), truth)
+}
+
+
+
+

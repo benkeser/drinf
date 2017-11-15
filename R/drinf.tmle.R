@@ -253,7 +253,9 @@ drinf.tmle <- function(L0, L1, L2,
             #--------------------
             # target Q and g
             #--------------------
+            in_ct <- 0
             for(ff in flucOrd){
+                in_ct <- in_ct + 1
                 if(verbose){
                     cat("Calling ", ff, " for targeting step. \n")
                 }
@@ -265,7 +267,7 @@ drinf.tmle <- function(L0, L1, L2,
                         verbose = verbose, ...
                     ))
                     flucOutNames <- names(flucOut)
-                }else{
+                }else if(ff == "redReg" & !(iter == 1 & in_ct == 1)){
                     # fit reduced regression
                     Qnr.gnr_list <- sapply(1:cvFolds, redReg, 
                       gn = gnstar_list, Qn = Qnstar_list, 
@@ -276,6 +278,8 @@ drinf.tmle <- function(L0, L1, L2,
                       return.models = return.models,
                       simplify = FALSE)
                     if(verbose) cat("Reduced-dimension regressions updated. \n")
+                    flucOutNames <- "Nothing to see here."
+                }else if(ff == "redReg" & iter == 1 & in_ct ==1){
                     flucOutNames <- "Nothing to see here."
                 }
                 # look for what names are in function output and assign values 

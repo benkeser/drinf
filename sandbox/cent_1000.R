@@ -99,7 +99,7 @@ if (args[1] == 'run') {
     maxIter = 25,
     return.ltmle = TRUE,
     allatonce = FALSE,
-    tolg = 2.5e-2,
+    tolg = 1e-2,
     tolQ = 1e-2, stratify = TRUE
     )
     )
