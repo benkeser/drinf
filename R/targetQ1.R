@@ -96,13 +96,13 @@ targetQ1 <- function(
         # use optim to try the minimization along intercept only submodel if glm 
         # looks wonky
         flucmod2 <- optim(
-            par = 0, fn = wnegloglik, gr = gradient.wnegloglik,
-            method = "L-BFGS-B", lower = -tol.coef, upper = tol.coef,
-            control = list(maxit = 10000),
-            Y = Q2ns, offset = flucOff, weight = flucCov2
-        )
+                par = 0, fn = offnegloglik, gr = gradient.offnegloglik,
+                method = "L-BFGS-B", lower = -tol.coef, upper = tol.coef,
+                control = list(maxit = 10000),
+                Y = Q2ns, offset = flucOff, weight = flucCov2
+            )
         epsilon <- flucmod2$par
-        tmp <- plogis(flucOff +  epsilon)
+        tmp <- plogis(flucOff + predCov2 * epsilon)*(L2.max - L2.min) + L2.min
     }    
     # new offset 
     flucOff <- c(

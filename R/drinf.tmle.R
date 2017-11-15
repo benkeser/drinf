@@ -277,6 +277,10 @@ drinf.tmle <- function(L0, L1, L2,
                       tolg = tolg, SL.Qr = SL.Qr, SL.gr = SL.gr,
                       return.models = return.models,
                       simplify = FALSE)
+                    tmp <- do.call(Map, c(c, Qnr.gnr_list))
+                    full_Qnr.gnr <- vector(mode = "list")
+                    full_Qnr.gnr$Qnr <- sapply(unique(names(tmp$Qnr)), function(x) unname(unlist(tmp$Qnr[names(tmp$Qnr)==x])), simplify=FALSE)
+                    full_Qnr.gnr$gnr <- sapply(unique(names(tmp$gnr)), function(x) unname(unlist(tmp$gnr[names(tmp$gnr)==x])), simplify=FALSE)
                     if(verbose) cat("Reduced-dimension regressions updated. \n")
                     flucOutNames <- "Nothing to see here."
                 }else if(ff == "redReg" & iter == 1 & in_ct ==1){
@@ -290,6 +294,7 @@ drinf.tmle <- function(L0, L1, L2,
                     Qnstar_list <- mapply(x = Qnstar_list, values = split_Q2nstar, 
                                      FUN = list_replace, MoreArgs = list(list = "Q2n"),
                                      SIMPLIFY = FALSE)
+                    full_Qnstar <- do.call(Map, c(c, Qnstar_list))
                 }
                 if("Q1nstar" %in% flucOutNames){
                     if(verbose) cat("Q1n was targeted by ", ff,". \n")
@@ -297,20 +302,23 @@ drinf.tmle <- function(L0, L1, L2,
                     Qnstar_list <- mapply(x = Qnstar_list, values = split_Q1nstar, 
                                      FUN = list_replace, MoreArgs = list(list = "Q1n"),
                                      SIMPLIFY = FALSE)
+                    full_Qnstar <- do.call(Map, c(c, Qnstar_list))
                 }
                 if("g1nstar" %in% flucOutNames){
                     if(verbose) cat("g1n was targeted by ", ff,". \n")
                     split_g1nstar <- split(flucOut$g1nstar, folds)
                     gnstar_list <- mapply(x = gnstar_list, values = split_g1nstar, 
                                      FUN = list_replace, MoreArgs = list(list = "g1n"),
-                                     SIMPLIFY = FALSE)                
+                                     SIMPLIFY = FALSE)
+                    full_gnstar <- do.call(Map, c(c, gnstar_list))        
                 }
                 if("g0nstar" %in% flucOutNames){
                     if(verbose) cat("g0n was targeted by ", ff,". \n")
                     split_g0nstar <- split(flucOut$g0nstar, folds)
                     gnstar_list <- mapply(x = gnstar_list, values = split_g0nstar, 
                                      FUN = list_replace, MoreArgs = list(list = "g0n"),
-                                     SIMPLIFY = FALSE)                 
+                                     SIMPLIFY = FALSE)
+                    full_gnstar <- do.call(Map, c(c, gnstar_list))             
                 }
                 # if("Qnr" %in% flucOutNames){
                 #     Qnr.gnr <- flucOut
@@ -320,12 +328,12 @@ drinf.tmle <- function(L0, L1, L2,
             #-------------------------
             # evaluate IF
             #-------------------------
-            full_Qnstar <- do.call(Map, c(c, Qnstar_list))
-            full_gnstar <- do.call(Map, c(c, gnstar_list))
-            tmp <- do.call(Map, c(c, Qnr.gnr_list))
-            full_Qnr.gnr <- vector(mode = "list")
-            full_Qnr.gnr$Qnr <- sapply(unique(names(tmp$Qnr)), function(x) unname(unlist(tmp$Qnr[names(tmp$Qnr)==x])), simplify=FALSE)
-            full_Qnr.gnr$gnr <- sapply(unique(names(tmp$gnr)), function(x) unname(unlist(tmp$gnr[names(tmp$gnr)==x])), simplify=FALSE)
+            # full_Qnstar <- do.call(Map, c(c, Qnstar_list))
+            # full_gnstar <- do.call(Map, c(c, gnstar_list))
+            # tmp <- do.call(Map, c(c, Qnr.gnr_list))
+            # full_Qnr.gnr <- vector(mode = "list")
+            # full_Qnr.gnr$Qnr <- sapply(unique(names(tmp$Qnr)), function(x) unname(unlist(tmp$Qnr[names(tmp$Qnr)==x])), simplify=FALSE)
+            # full_Qnr.gnr$gnr <- sapply(unique(names(tmp$gnr)), function(x) unname(unlist(tmp$gnr[names(tmp$gnr)==x])), simplify=FALSE)
 
             if.dr <- evaluateIF(
                 A0 = A0, A1 = A1, L2 = L2, 
