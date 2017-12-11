@@ -70,7 +70,7 @@ estimateQr <- function(
         obsWeights = rep(1, length(train_g1n[train_A0==abar[1]])),
         family = gaussian(),
         SL.library=SL.Qr, cvControl = list(V = 2),
-        method = "method.CC_LS",
+        method = "method.CC_LS_mod",
         verbose=verbose))
     # empty vector of predictions
     Q2nr.obsa <- rep(NA, length(valid_A0))
@@ -106,7 +106,7 @@ estimateQr <- function(
         SL.library=SL.Qr,
         obsWeights = rep(1, length(train_g0n)),
         family = gaussian(), cvControl = list(V = 2),
-        method = "method.CC_LS",
+        method = "method.CC_LS_mod",
         verbose = verbose))
     if(multiAlgos){
         weightfail <- all(Q1r1mod$coef==0)
@@ -134,7 +134,7 @@ estimateQr <- function(
         SL.library = SL.Qr,
         obsWeights = rep(1, length(train_g0n)),
         family = gaussian(), cvControl = list(V = 2),
-        method = "method.CC_LS",
+        method = "method.CC_LS_mod",
         verbose=verbose))
     if(multiAlgos){
         weightfail <- all(Q1r2mod$coef==0)

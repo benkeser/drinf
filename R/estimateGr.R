@@ -79,7 +79,7 @@ estimategr <- function(
         SL.library=SL.gr,
         obsWeights = rep(1, length(train_Q1n)),
         family = binomial(),
-        method = "method.CC_nloglik",
+        method = "method.CC_nloglik_mod",
         cvControl = list(V = 2),
         verbose=verbose))
     if(multiAlgos){
@@ -123,7 +123,7 @@ estimategr <- function(
         SL.library=SL.gr,
         obsWeights = rep(1, length(train_Q2n)),
         family = binomial(),
-        method = "method.CC_nloglik", 
+        method = "method.CC_nloglik_mod", 
         cvControl = list(V = 2),
         verbose=verbose))
     if(multiAlgos){
@@ -152,7 +152,7 @@ estimategr <- function(
         SL.library = SL.gr,
         obsWeights = rep(1, length(train_Q1n)),
         family = gaussian(),
-        method = "method.CC_LS",
+        method = "method.CC_LS_mod",
         cvControl = list(V = 2),
         verbose = verbose))
     if(multiAlgos){
@@ -194,7 +194,7 @@ estimategr <- function(
         SL.library=SL.gr,
         obsWeights = rep(1, length(train_Q2n)),
         family = gaussian(),
-        method = "method.CC_LS",
+        method = "method.CC_LS_mod",
         cvControl = list(V = 2),
         verbose=verbose))
     if(multiAlgos){
@@ -221,7 +221,7 @@ estimategr <- function(
         SL.library = SL.gr,
         obsWeights = rep(1, length(train_Q2n)),
         family = gaussian(),
-        method = "method.CC_LS", 
+        method = "method.CC_LS_mod", 
         cvControl = list(V = 2),
         verbose = verbose))
     if(multiAlgos){
