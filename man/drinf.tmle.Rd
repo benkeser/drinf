@@ -12,7 +12,8 @@ drinf.tmle(L0, L1, L2, A0, A1, abar = c(1, 1), stratify = TRUE,
   tolIF = 1/(length(L2)), tolg = 1e-08, tolQ = 1e-08, verbose = TRUE,
   SL.Q.options = list(family = gaussian()), SL.g.options = list(family =
   binomial()), glm.Q.options = list(family = gaussian()),
-  return.ltmle = TRUE, return.naive = TRUE, cvFolds = 1, ...)
+  return.ltmle = TRUE, only.ltmle = FALSE, return.naive = TRUE,
+  cvFolds = 1, ...)
 }
 \arguments{
 \item{L0}{A \code{data.frame} featuring covariates measured at baseline.}
@@ -92,6 +93,8 @@ regression fits.}
 
 \item{return.ltmle}{A \code{boolean} indicating whether to compute the LTMLE estimate using a similar
 iterative updating scheme.}
+
+\item{only.ltmle}{Only return ltmle (for bootstrapping)}
 
 \item{return.naive}{A \code{boolean} indicating whether to return the naive plug-in estimate.}
 

@@ -57,6 +57,7 @@
 #' parametric submodels (if \code{FALSE}) or universally least favorable submodels (if \code{TRUE})
 #' @param universalStepSize A \code{numeric} indicating the step size for the recursive calculation of 
 #' universally least favorable submodel. Default is \code{0.005}. 
+#' @param only.ltmle Only return ltmle (for bootstrapping)
 #' @param ... Other arguments (not currently used)
 #' @return TO DO: Add return values
 #' 
@@ -97,7 +98,8 @@ drinf.tmle <- function(L0, L1, L2,
                        SL.Q.options = list(family = gaussian()),
                        SL.g.options = list(family = binomial()),
                        glm.Q.options = list(family = gaussian()),
-                       return.ltmle = TRUE,
+                       return.ltmle = TRUE, 
+                       only.ltmle = FALSE, 
                        return.naive = TRUE,
                        cvFolds = 1, 
                       ...){
@@ -132,6 +134,7 @@ drinf.tmle <- function(L0, L1, L2,
     #-----------------------------------------
     # compute reduced dimension regressions
     #----------------------------------------
+    if(!only.ltmle){
     Qnr.gnr_list <- sapply(1:cvFolds, redReg, 
                       gn = gn_list, Qn = Qn_list, 
                       A0 = A0, A1 = A1, L2 = L2, 
@@ -526,7 +529,7 @@ drinf.tmle <- function(L0, L1, L2,
             if.dr$Dg1.Q2 - if.dr$Dg0.Q1 - if.dr$DQ2.g1 - 
             if.dr$DQ2.g0 - if.dr$DQ1.g0)
     )/length(A0))
-
+    }
     #-----------------------------------
     # Computing the regular LTMLE
     #-----------------------------------
@@ -591,7 +594,15 @@ drinf.tmle <- function(L0, L1, L2,
     #----------------------------
     out <- vector(mode = "list")
     
-    # dr tmle output
+    # ltmle output
+    out$est.ltmle <- NULL
+    out$se.ltmle <- NULL
+    if(return.ltmle){
+        out$est.ltmle <- psin.ltmle
+        out$se.ltmle <- se.ltmle
+    }
+    # dr tmle output    
+    if(!only.ltmle){
     out$est <- psin
     out$se <- as.numeric(se)
 
@@ -604,14 +615,7 @@ drinf.tmle <- function(L0, L1, L2,
 
     out$est_trace <- psin_trace
     out$se_trace <- se_trace
-    # ltmle output
-    out$est.ltmle <- NULL
-    out$se.ltmle <- NULL
-    if(return.ltmle){
-        out$est.ltmle <- psin.ltmle
-        out$se.ltmle <- se.ltmle
-    }
-    
+
     # naive output
     out$est.naive <- NULL
     if(return.ltmle){
@@ -655,6 +659,6 @@ drinf.tmle <- function(L0, L1, L2,
             out$flucmod.ltmle <- etastar.ltmle$flucmod
         }
     }
-    
+    }
     return(out)
 }

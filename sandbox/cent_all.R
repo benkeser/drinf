@@ -96,7 +96,7 @@ if (args[1] == 'run') {
                 "redReg","targetQ2","targetQ1"),
     # flucOrd = c("targetQg", "redReg"),
     return.models = FALSE,
-    verbose = FALSE,
+    verbose = TRUE,
     maxIter = maxIter,
     return.ltmle = TRUE,
     allatonce = FALSE,
@@ -107,7 +107,7 @@ if (args[1] == 'run') {
 
     # bootstrap
     nBoot <- 200
-    estMatrix <- matrix(NA, nrow = nBoot, ncol = maxIter + 5)
+    estMatrix <- rep(NA, nBoot)
     for(j in 1:nBoot){
         idx <- sample(1:parm$n[i], replace = TRUE)
         # faster to call mean.tmle
@@ -130,21 +130,14 @@ if (args[1] == 'run') {
             verbose = FALSE,
             maxIter = maxIter,
             return.ltmle = TRUE,
+            only.ltmle = TRUE,
             allatonce = FALSE,
             tolg = 1e-2,
             tolQ = 1e-2, stratify = TRUE
         )
-        drtmle_norm_n <- boot$est_trace[boot$n_norm_iter]        
-        drtmle_norm_sqrt_n <- boot$est_trace[boot$sqrt_n_norm_iter]
-        drtmle_max_sqrt_n <- boot$est_trace[boot$sqrt_n_max_iter]
-        drtmle_max_n <- boot$est_trace[boot$n_max_iter]
-        drtmle_trace <- boot$est_trace
-        ltmle <- boot$est_ltmle
-        estMatrix[j,] <- c(drtmle_max_sqrt_n, drtmle_norm_sqrt_n,
-                           drtmle_max_n, drtmle_norm_n,
-                           drtmle_trace, ltmle)
+        estMatrix[j] <- boot$est_ltmle
     }
-    ciMatrix <- apply(estMatrix, 2, quantile, probs = c(0.025, 0.975))
+    ltmle_boot_ci <- quantile(estMatrix, c(0.025, 0.975))
 
     # drtmle with max(if) < 1/n stopping criteria
     # drtmle_ci <- rep(object$est,2) + c(-1.96, 1.96) * rep(object$se,2)
@@ -191,7 +184,7 @@ if (args[1] == 'run') {
              object$est_trace, # tmles with maxIter 1:25
              object$se_trace,
              # add confidence intervals for other estimators 
-             object$est.ltmle, ltmle_ci,
+             object$est.ltmle, ltmle_ci, ltmle_boot_ci,
              as.numeric(ltmle_ci[1] < truth & ltmle_ci[2] > truth),
              object$iter, object$sqrt_n_max_iter, object$n_max_iter,
              object$n_norm_iter, object$sqrt_n_norm_iter,
