@@ -69,7 +69,7 @@ estimateQr <- function(
         newX = data.frame(g1n = valid_g1n[valid_A0==abar[1]]),
         obsWeights = rep(1, length(train_g1n[train_A0==abar[1]])),
         family = gaussian(),
-        SL.library=SL.Qr,
+        SL.library=SL.Qr, cvControl = list(V = 2),
         method = "method.CC_LS",
         verbose=verbose))
     # empty vector of predictions
@@ -105,7 +105,7 @@ estimateQr <- function(
         newX=data.frame(g0n = valid_g0n),
         SL.library=SL.Qr,
         obsWeights = rep(1, length(train_g0n)),
-        family = gaussian(),
+        family = gaussian(), cvControl = list(V = 2),
         method = "method.CC_LS",
         verbose = verbose))
     if(multiAlgos){
@@ -133,7 +133,7 @@ estimateQr <- function(
         newX = data.frame(g0n = valid_g0n),
         SL.library = SL.Qr,
         obsWeights = rep(1, length(train_g0n)),
-        family = gaussian(),
+        family = gaussian(), cvControl = list(V = 2),
         method = "method.CC_LS",
         verbose=verbose))
     if(multiAlgos){

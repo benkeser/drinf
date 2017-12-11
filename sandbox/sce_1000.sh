@@ -22,7 +22,7 @@
 
 ##################### Change these constants ##############################
 
-ANALYSIS='new_1000_v1'      # change for every analysis you run (2nd arg)
+ANALYSIS='fix_1000_v1'      # change for every analysis you run (2nd arg)
 MAILDOM='@fhcrc.org'   # your email domain (for receiving error messages)
 MAXARRAYSIZE=1000          # set to 0 if you are not using slurm job arrays
 MYSCRATCH="./scratch"  # location of your persistent scratch dir

@@ -11,9 +11,9 @@ scp cent* sce* makeData.R dbenkese@rhino.fhcrc.org:~/drinf
 ssh dbenkese@rhino.fhcrc.org
 cd drinf
 chmod +x cent* sce*
-./sce_1000.sh ./cent_1000.R cvrun_1000_V3
-./sce_5000.sh ./cent_5000.R cvrun_5000_V2
-./sce_500.sh ./cent_500.R sub_test_2
+./sce_1000.sh ./cent_1000.R fix_1000_v1
+./sce_5000.sh ./cent_5000.R fix_5000_v1
+./sce_500.sh ./cent_500.R fix_500_v1
 
 #-----------------------------------------
 # commands to get into rhino and load R

@@ -91,8 +91,8 @@ if (args[1] == 'run') {
     cvFolds = parm$cv[i],
     SL.Qr = c("SL.gam","SL.glm","SL.mean"),
     SL.gr = c("SL.gam","SL.glm","SL.mean"),
-    flucOrd = c("targetg0","targetg1","redReg",
-               "targetQ2","targetQ1","redReg"),
+    flucOrd = c("redReg","targetg0","targetg1",
+                "redReg","targetQ2","targetQ1"),
     # flucOrd = c("targetQg", "redReg"),
     return.models = FALSE,
     verbose = FALSE,
@@ -128,7 +128,7 @@ if (args[1] == 'run') {
     ltmle_ci <- rep(object$est.ltmle,2) + c(-1.96, 1.96) * rep(object$se.ltmle,2)
 
     # computed locally
-    truth <- 2.700148    
+    truth <- 1.3    
     # output should look like 
     # seed, n, truth
     # drtmle est, ci, coverage

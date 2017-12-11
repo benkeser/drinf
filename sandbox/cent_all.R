@@ -79,7 +79,8 @@ if (args[1] == 'run') {
     
     # set seed
     set.seed(parm$seed[i])
-    
+    maxIter <- 15
+
     system.time(
     # faster to call mean.tmle
     object <- drinf.tmle(
@@ -89,20 +90,62 @@ if (args[1] == 'run') {
     SL.Q = parm$Q[i],
     SL.g = parm$g[i], 
     cvFolds = parm$cv[i],
-    SL.Qr = c("SL.gam","SL.glm","SL.mean"),
-    SL.gr = c("SL.gam","SL.glm","SL.mean"),
+    SL.Qr = c("SL.gam","SL.glm","SL.mean","SL.hal9001"),
+    SL.gr = c("SL.gam","SL.glm","SL.mean","SL.hal9001"),
     flucOrd = c("redReg","targetg0","targetg1",
                 "redReg","targetQ2","targetQ1"),
     # flucOrd = c("targetQg", "redReg"),
     return.models = FALSE,
     verbose = FALSE,
-    maxIter = 25,
+    maxIter = maxIter,
     return.ltmle = TRUE,
     allatonce = FALSE,
     tolg = 1e-2,
     tolQ = 1e-2, stratify = TRUE
     )
     )
+
+    # bootstrap
+    nBoot <- 200
+    estMatrix <- matrix(NA, nrow = nBoot, ncol = maxIter + 5)
+    for(j in 1:nBoot){
+        idx <- sample(1:parm$n[i], replace = TRUE)
+        # faster to call mean.tmle
+        boot <- drinf.tmle(
+            L0 = dat$L0[idx,,drop=FALSE], 
+            L1 = dat$L1[idx,,drop=FALSE], 
+            L2 = dat$L2[idx], 
+            A0 = dat$A0[idx], 
+            A1 = dat$A1[idx], 
+            abar = c(1,1), 
+            SL.Q = parm$Q[i],
+            SL.g = parm$g[i], 
+            cvFolds = parm$cv[i],
+            SL.Qr = c("SL.gam","SL.glm","SL.mean","SL.hal9001"),
+            SL.gr = c("SL.gam","SL.glm","SL.mean","SL.hal9001"),
+            flucOrd = c("redReg","targetg0","targetg1",
+                        "redReg","targetQ2","targetQ1"),
+            # flucOrd = c("targetQg", "redReg"),
+            return.models = FALSE,
+            verbose = FALSE,
+            maxIter = maxIter,
+            return.ltmle = TRUE,
+            allatonce = FALSE,
+            tolg = 1e-2,
+            tolQ = 1e-2, stratify = TRUE
+        )
+        drtmle_norm_n <- boot$est_trace[boot$n_norm_iter]        
+        drtmle_norm_sqrt_n <- boot$est_trace[boot$sqrt_n_norm_iter]
+        drtmle_max_sqrt_n <- boot$est_trace[boot$sqrt_n_max_iter]
+        drtmle_max_n <- boot$est_trace[boot$n_max_iter]
+        drtmle_trace <- boot$est_trace
+        ltmle <- boot$est_ltmle
+        estMatrix[j,] <- c(drtmle_max_sqrt_n, drtmle_norm_sqrt_n,
+                           drtmle_max_n, drtmle_norm_n,
+                           drtmle_trace, ltmle)
+    }
+    ciMatrix <- apply(estMatrix, 2, quantile, probs = c(0.025, 0.975))
+
     # drtmle with max(if) < 1/n stopping criteria
     # drtmle_ci <- rep(object$est,2) + c(-1.96, 1.96) * rep(object$se,2)
     # drtmle with norm(if) < 1/n stopping criteria

@@ -18,11 +18,11 @@ if(length(args) < 1){
   stop("Not enough arguments. Please use args 'listsize', 'prepare', 'run <itemsize>' or 'merge'")
 }
 
-ns <- c(500)
+ns <- c(9000)
 bigB <- 1000
 g <- c("SL.hal9001","SL.glm")
 Q <- c("SL.hal9001","SL.glm")
-cv <- c(1,5)
+cv <- c(1)
 # g <- c("SL.glm.interaction")
 # Q <- c("SL.glm.interaction")
 parm <- expand.grid(seed=1:bigB,
@@ -172,7 +172,7 @@ if (args[1] == 'run') {
 
 # merge job ###########################
 if (args[1] == 'merge') {   
-    ns <- c(500,1000,5000)
+    ns <- c(500,1000,5000,9000)
     bigB <- 1000
     g <- c("SL.hal9001","SL.glm")
     Q <- c("SL.hal9001","SL.glm")
@@ -255,11 +255,10 @@ if (args[1] == 'merge') {
     getBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
     getBias(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
 
-    getRootNBias <- function(out, n, Q, g, est = c("max_n_est","max_sqrt_n_est",
-                                              "norm_n_est", "norm_sqrt_n_est",
-                                              "cv_max_n_est","cv_max_sqrt_n_est",
-                                              "cv_norm_n_est", "cv_norm_sqrt_n_est",
-                                              "ltmle","cv_ltmle")){
+    getRootNBias <- function(out, n, Q, g, est = c("max_sqrt_n_est",
+                                                   "norm_sqrt_n_est",
+                                                   paste0("drtmle_maxIter",1:5),
+                                                   "ltmle")){
       rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
       rootn_bias <- by(rslt, rslt$n, function(x){
         o <- matrix(c(nrow(x), rep(NA, length(est))), nrow = 1)
@@ -276,21 +275,20 @@ if (args[1] == 'merge') {
       ou <- cbind(unique(rslt$n), ou)
       ou
     }
-    getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
+    getRootNBias(out, n = c(500,1000,5000,9000), Q = "SL.hal9001", g = "SL.glm")
                  # est = paste0("cv_drtmle_maxIter", 1:25))
-    getRootNBias(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
+    getRootNBias(out, n = c(500,1000,5000,9000), g = "SL.hal9001", Q = "SL.glm")
                  # est = paste0("cv_drtmle_maxIter", 1:25))
-    getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+    getRootNBias(out, n = c(500,1000,5000,9000), Q = "SL.hal9001", g = "SL.hal9001")
                  # est = paste0("cv_drtmle_maxIter", 1:25))
-    getRootNBias(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
+    getRootNBias(out, n = c(500,1000,5000,9000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
                  # est = paste0("cv_drtmle_maxIter", 1:25))
 
 
-    getCov <- function(out, n, Q, g,est = c("max_n","max_sqrt_n",
-                                              "norm_n", "norm_sqrt_n",
-                                              "cv_max_n","cv_max_sqrt_n",
-                                              "cv_norm_n", "cv_norm_sqrt_n",
-                                              "ltmle","cv_ltmle")){
+    getCov <- function(out, n, Q, g,est = c("max_sqrt_n",
+                                             "norm_sqrt_n",
+                                             paste0("drtmle_maxIter",1:5),
+                                             "ltmle")){
       rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
       cov <- by(rslt, rslt$n, function(x){
         o <- matrix(c(nrow(x), rep(NA, length(est))), nrow = 1)
@@ -298,7 +296,15 @@ if (args[1] == 'merge') {
         for(e in est){
           # browser()
           ct <- ct + 1
-          o[ct] <- mean(x[,paste0(e,"_cov")], na.rm = TRUE)
+          cov_avail <- any(grepl(paste0(e,"_cov"), colnames(rslt)))
+          if(cov_avail){
+            o[ct] <- mean(x[,paste0(e,"_cov")], na.rm = TRUE)
+          }else{
+            this_est <- x[,paste0(e)]
+            this_se <- x[,paste0("se_",e)]
+            cil <- this_est - 1.96*this_se; ciu <- this_est + 1.96*this_se
+            o[ct] <- mean(cil < x$truth[1] & ciu > x$truth[1])
+          }
         }
         colnames(o) <- c("nsim", est)
         o
@@ -307,10 +313,80 @@ if (args[1] == 'merge') {
       ou <- cbind(unique(rslt$n), ou)
       ou
     }
-    getCov(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
-    getCov(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
-    getCov(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
-    getCov(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
+    getCov(out, n = c(500,1000,5000,9000), Q = "SL.hal9001", g = "SL.glm")
+    getCov(out, n = c(500,1000,5000,9000), g = "SL.hal9001", Q = "SL.glm")
+    getCov(out, n = c(500,1000,5000,9000), Q = "SL.hal9001", g = "SL.hal9001")
+    getCov(out, n = c(500,1000,5000,9000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
+
+
+    getSEvsSD <- function(out, n, Q, g,est = c("max_sqrt_n",
+                                             "norm_sqrt_n",
+                                             paste0("drtmle_maxIter",1:5),
+                                             "ltmle")){
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
+      cov <- by(rslt, rslt$n, function(x){
+        o <- matrix(c(nrow(x), rep(NA, length(est))), nrow = 1)
+        ct <- 1
+        for(e in est){
+          # browser()
+          ct <- ct + 1
+          se_avail <- any(grepl(paste0("se_",e), colnames(rslt)))
+          if(se_avail){
+            o[ct] <- mean(x[,paste0("se_",e)], na.rm = TRUE) / sd(x[,e], na.rm = TRUE)
+          }else{
+            this_se <- mean((x[,paste0(e,"_ciu")] - x[,paste0(e,"_cil")]) / (1.96*2))
+            if(e != "ltmle"){
+              this_sd <- sd(x[,paste0(e,"_est")])
+            }else{
+              this_sd <- sd(x[,e])
+            }
+            o[ct] <- this_se / this_sd
+          }
+        }
+        colnames(o) <- c("nsim", est)
+        o
+      })
+      ou <- Reduce(rbind, cov)
+      ou <- cbind(unique(rslt$n), ou)
+      ou
+    }
+    getSEvsSD(out, n = c(500,1000,5000,9000), Q = "SL.hal9001", g = "SL.glm")
+    getSEvsSD(out, n = c(500,1000,5000,9000), g = "SL.hal9001", Q = "SL.glm")
+    getSEvsSD(out, n = c(500,1000,5000,9000), Q = "SL.hal9001", g = "SL.hal9001")
+    getSEvsSD(out, n = c(500,1000,5000,9000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
+
+    getNormalSummary <- function(out, n, Q, g,est = c("max_sqrt_n",
+                                             "norm_sqrt_n",
+                                             paste0("drtmle_maxIter",1:5),
+                                             "ltmle")){
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
+      cov <- by(rslt, rslt$n, function(x){
+        o <- matrix(c(nrow(x), rep(NA, length(est))), nrow = 1)
+        ct <- 1
+        for(e in est){
+          # browser()
+          ct <- ct + 1
+          se_avail <- any(grepl(paste0("se_",e), colnames(rslt)))
+          if(se_avail){
+            o[ct] <- mean(x[,paste0("se_",e)], na.rm = TRUE) / sd(x[,e], na.rm = TRUE)
+          }else{
+            this_se <- mean((x[,paste0(e,"_ciu")] - x[,paste0(e,"_cil")]) / (1.96*2))
+            if(e != "ltmle"){
+              this_sd <- sd(x[,paste0(e,"_est")])
+            }else{
+              this_sd <- sd(x[,e])
+            }
+            o[ct] <- this_se / this_sd
+          }
+        }
+        colnames(o) <- c("nsim", est)
+        o
+      })
+      ou <- Reduce(rbind, cov)
+      ou <- cbind(unique(rslt$n), ou)
+      ou
+    }
+    
 
     getIC <- function(out, n, Q, g){
       rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
