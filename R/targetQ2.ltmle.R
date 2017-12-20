@@ -51,9 +51,11 @@ targetQ2.ltmle <- function(
     # making covariates for fluctuation
     #-------------------------------------------
     # the original "clever covariates"
+    combinedPropensity <- gn$g0n * gn$g1n
+    combinedPropensity[combinedPropensity < tolg] <- tolg
     flucCov1 <- c(
         # (L2.max - L2.min) * as.numeric(A0==abar[1] & A1==abar[2])/(gn$g0n * gn$g1n) # the usual guy
-        as.numeric(A0==abar[1] & A1==abar[2])/(gn$g0n * gn$g1n) # the usual guy
+        as.numeric(A0==abar[1] & A1==abar[2])/combinedPropensity # the usual guy
     )
     
     #-------------------------------------------
@@ -62,7 +64,7 @@ targetQ2.ltmle <- function(
     # getting the values of the clever covariates evaluated at 
     # \bar{A} = abar
     predCov1 <- c(
-        1/(gn$g0n * gn$g1n)  # all c(A0,A1) = abar
+        1/combinedPropensity  # all c(A0,A1) = abar
         # (L2.max - L2.min)/(gn$g0n * gn$g1n)  # all c(A0,A1) = abar
     )
     

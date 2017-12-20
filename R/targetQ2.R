@@ -53,8 +53,10 @@ targetQ2 <- function(
     # making covariates for fluctuation
     #-------------------------------------------
     # the original "clever covariates"
+    combinedPropensity <- gn$g0n * gn$g1n
+    combinedPropensity[combinedPropensity < tolg] <- tolg
     flucCov1 <- c(
-        as.numeric(A0==abar[1] & A1==abar[2])/(gn$g0n * gn$g1n) # the usual guy
+        as.numeric(A0==abar[1] & A1==abar[2])/(combinedPropensity) # the usual guy
         # (L2.max - L2.min) * as.numeric(A0==abar[1] & A1==abar[2])/(gn$g0n * gn$g1n) # the usual guy
     )
     # the new "clever covariates" for Q
@@ -73,7 +75,7 @@ targetQ2 <- function(
     # \bar{A} = abar
     predCov1 <- c(
         # (L2.max - L2.min)/(gn$g0n * gn$g1n)  # all c(A0,A1) = abar
-        1/(gn$g0n * gn$g1n)  # all c(A0,A1) = abar
+        1/combinedPropensity  # all c(A0,A1) = abar
     )
     
     predCov2 <- c(
@@ -145,7 +147,7 @@ targetQ2 <- function(
                 Y = L2s, offset = flucOff, weight = flucCov1
             )
         epsilon <- flucmod1$par
-        Q2nstar <- plogis(flucOff + predCov1 * epsilon)*(L2.max - L2.min) + L2.min
+        Q2nstar <- stats::plogis(flucOff + predCov1 * epsilon)*(L2.max - L2.min) + L2.min
     }
 
     #--------------
