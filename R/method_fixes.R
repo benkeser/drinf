@@ -1,5 +1,8 @@
-#' A modification of method.CC_LS_mod to 
-#' not fail with duplicated predictions
+#' Modification of convex combination least squares method 
+#' for \code{SuperLearner} that doesn't fail with duplicated predictors.
+#' Issue reported to \code{SuperLearner} maintainers. This function will
+#' be deprecated when a more robust fix in the \code{SuperLearner} package
+#' is implemented.
 #' @export
 method.CC_LS_mod <- function()
 {
@@ -19,7 +22,7 @@ method.CC_LS_mod <- function()
                 bvec = bvec, meq = 1)
             invisible(fit)
         }
-        colDup <- which(duplicated(Z, MARGIN = 2))
+        colDup <- which(duplicated(round(Z, 8), MARGIN = 2))
         modZ <- Z
         if(length(colDup) > 0){
         	warning(paste0("Algorithm ", colDup, " is duplicated. Setting weight to 0."))
@@ -50,8 +53,13 @@ method.CC_LS_mod <- function()
     invisible(out)
 }
 
-#' Modification of convex combo neg log like that doesn't
-#' fail with duplicated predictors
+#' Modification of convex combination negative log likelihood method
+#' for \code{SuperLearner} that doesn't fail with duplicated predictors.
+#' Issue reported to \code{SuperLearner} maintainers. This function will
+#' be deprecated when a more robust fix in the \code{SuperLearner} package
+#' is implemented.
+#' @importFrom SuperLearner trimLogit
+#' @importFrom stats plogis
 #' @export
 method.CC_nloglik_mod <- function () 
 {
@@ -59,21 +67,21 @@ method.CC_nloglik_mod <- function ()
         if (sum(coef != 0) == 0) {
             stop("All metalearner coefficients are zero, cannot compute prediction.")
         }
-        plogis(trimLogit(predY[, coef != 0], trim = control$trimLogit) %*% 
+        stats::plogis(SuperLearner::trimLogit(predY[, coef != 0], trim = control$trimLogit) %*% 
             matrix(coef[coef != 0]))
     }
     computeCoef = function(Z, Y, libraryNames, obsWeights, control, 
         verbose, ...) {
-        colDup <- which(duplicated(Z, MARGIN = 2))
+        colDup <- which(duplicated(round(Z, 8), MARGIN = 2))
         modZ <- Z
         if(length(colDup) > 0){
             warning(paste0("Algorithm ", colDup, " is duplicated. Setting weight to 0."))
             modZ <- modZ[,-colDup]
         }
-        modlogitZ = trimLogit(modZ, control$trimLogit)
-        logitZ = trimLogit(Z, control$trimLogit)
+        modlogitZ = SuperLearner::trimLogit(modZ, control$trimLogit)
+        logitZ = SuperLearner::trimLogit(Z, control$trimLogit)
         cvRisk <- apply(logitZ, 2, function(x) -sum(2 * obsWeights * 
-            ifelse(Y, plogis(x, log.p = TRUE), plogis(x, log.p = TRUE, 
+            ifelse(Y, stats::plogis(x, log.p = TRUE), stats::plogis(x, log.p = TRUE, 
                 lower.tail = FALSE))))
         names(cvRisk) <- libraryNames
         obj_and_grad <- function(y, x, w = NULL) {
@@ -81,12 +89,12 @@ method.CC_nloglik_mod <- function ()
             x <- x
             function(beta) {
                 xB <- x %*% cbind(beta)
-                loglik <- y * plogis(xB, log.p = TRUE) + (1 - 
-                  y) * plogis(xB, log.p = TRUE, lower.tail = FALSE)
+                loglik <- y * stats::plogis(xB, log.p = TRUE) + (1 - 
+                  y) * stats::plogis(xB, log.p = TRUE, lower.tail = FALSE)
                 if (!is.null(w)) 
                   loglik <- loglik * w
                 obj <- -2 * sum(loglik)
-                p <- plogis(xB)
+                p <- stats::plogis(xB)
                 grad <- if (is.null(w)) 
                   2 * crossprod(x, cbind(p - y))
                 else 2 * crossprod(x, w * cbind(p - y))

@@ -18,7 +18,7 @@ if(length(args) < 1){
   stop("Not enough arguments. Please use args 'listsize', 'prepare', 'run <itemsize>' or 'merge'")
 }
 
-ns <- c(500,1000,5000,9000)
+ns <- c(500,1000,5000,7000)
 bigB <- 1000
 g <- c("SL.hal9001","SL.glm")
 Q <- c("SL.hal9001","SL.glm")
@@ -79,7 +79,7 @@ if (args[1] == 'run') {
     
     # set seed
     set.seed(parm$seed[i])
-    maxIter <- 15
+    maxIter <- 5
 
     system.time(
     # faster to call mean.tmle
@@ -90,8 +90,8 @@ if (args[1] == 'run') {
     SL.Q = parm$Q[i],
     SL.g = parm$g[i], 
     cvFolds = parm$cv[i],
-    SL.Qr = c("SL.gam","SL.glm","SL.mean","SL.hal9001"),
-    SL.gr = c("SL.gam","SL.glm","SL.mean","SL.hal9001"),
+    SL.Qr = c("SL.gam","SL.glm","SL.mean","SL.earth","SL.hal9001"),
+    SL.gr = c("SL.gam","SL.glm","SL.mean","SL.earth","SL.hal9001"),
     flucOrd = c("redReg","targetg0","targetg1",
                 "redReg","targetQ2","targetQ1"),
     # flucOrd = c("targetQg", "redReg"),
@@ -106,38 +106,38 @@ if (args[1] == 'run') {
     )
 
     # bootstrap
-    nBoot <- 200
-    estMatrix <- rep(NA, nBoot)
-    for(j in 1:nBoot){
-        idx <- sample(1:parm$n[i], replace = TRUE)
-        # faster to call mean.tmle
-        boot <- drinf.tmle(
-            L0 = dat$L0[idx,,drop=FALSE], 
-            L1 = dat$L1[idx,,drop=FALSE], 
-            L2 = dat$L2[idx], 
-            A0 = dat$A0[idx], 
-            A1 = dat$A1[idx], 
-            abar = c(1,1), 
-            SL.Q = parm$Q[i],
-            SL.g = parm$g[i], 
-            cvFolds = parm$cv[i],
-            SL.Qr = c("SL.gam","SL.glm","SL.mean","SL.hal9001"),
-            SL.gr = c("SL.gam","SL.glm","SL.mean","SL.hal9001"),
-            flucOrd = c("redReg","targetg0","targetg1",
-                        "redReg","targetQ2","targetQ1"),
-            # flucOrd = c("targetQg", "redReg"),
-            return.models = FALSE,
-            verbose = FALSE,
-            maxIter = maxIter,
-            return.ltmle = TRUE,
-            only.ltmle = TRUE,
-            allatonce = FALSE,
-            tolg = 1e-2,
-            tolQ = 1e-2, stratify = TRUE
-        )
-        estMatrix[j] <- boot$est_ltmle
-    }
-    ltmle_boot_ci <- quantile(estMatrix, c(0.025, 0.975))
+    # nBoot <- 200
+    # estMatrix <- rep(NA, nBoot)
+    # for(j in 1:nBoot){
+    #     idx <- sample(1:parm$n[i], replace = TRUE)
+    #     # faster to call mean.tmle
+    #     boot <- drinf.tmle(
+    #         L0 = dat$L0[idx,,drop=FALSE], 
+    #         L1 = dat$L1[idx,,drop=FALSE], 
+    #         L2 = dat$L2[idx], 
+    #         A0 = dat$A0[idx], 
+    #         A1 = dat$A1[idx], 
+    #         abar = c(1,1), 
+    #         SL.Q = parm$Q[i],
+    #         SL.g = parm$g[i], 
+    #         cvFolds = parm$cv[i],
+    #         SL.Qr = c("SL.gam","SL.glm","SL.mean","SL.hal9001"),
+    #         SL.gr = c("SL.gam","SL.glm","SL.mean","SL.hal9001"),
+    #         flucOrd = c("redReg","targetg0","targetg1",
+    #                     "redReg","targetQ2","targetQ1"),
+    #         # flucOrd = c("targetQg", "redReg"),
+    #         return.models = FALSE,
+    #         verbose = FALSE,
+    #         maxIter = maxIter,
+    #         return.ltmle = TRUE,
+    #         only.ltmle = TRUE,
+    #         allatonce = FALSE,
+    #         tolg = 1e-2,
+    #         tolQ = 1e-2, stratify = TRUE
+    #     )
+    #     estMatrix[j] <- boot$est.ltmle
+    # }
+    # ltmle_boot_ci <- quantile(estMatrix, c(0.025, 0.975))
 
     # drtmle with max(if) < 1/n stopping criteria
     # drtmle_ci <- rep(object$est,2) + c(-1.96, 1.96) * rep(object$se,2)
@@ -160,7 +160,7 @@ if (args[1] == 'run') {
     se_drtmle_max_n <- object$se_trace[object$n_max_iter]
     drtmle_max_n_ci <- rep(drtmle_max_n,2) + c(-1.96, 1.96) * rep(se_drtmle_max_n,2)
     
-    drtmle_ci_trace <- rep(object$est_trace,2) + c(rep(-1.96, 25), rep(1.96, 25)) * rep(object$se_trace, 2)
+    drtmle_ci_trace <- rep(object$est_trace,2) + c(rep(-1.96, maxIter), rep(1.96, maxIter)) * rep(object$se_trace, 2)
     ltmle_ci <- rep(object$est.ltmle,2) + c(-1.96, 1.96) * rep(object$se.ltmle,2)
 
     # computed locally
@@ -184,22 +184,23 @@ if (args[1] == 'run') {
              object$est_trace, # tmles with maxIter 1:25
              object$se_trace,
              # add confidence intervals for other estimators 
-             object$est.ltmle, ltmle_ci, ltmle_boot_ci,
+             object$est.ltmle, ltmle_ci, # ltmle_boot_ci,
              as.numeric(ltmle_ci[1] < truth & ltmle_ci[2] > truth),
+             # as.numeric(ltmle_boot_ci[1] < truth & ltmle_boot_ci[2] > truth),
              object$iter, object$sqrt_n_max_iter, object$n_max_iter,
              object$n_norm_iter, object$sqrt_n_norm_iter,
              unlist(object$ic))
 
     # save output 
-    save(out, file = paste0("~/drinf/out/out_n=",
+    save(out, file = paste0("~/drinf/out/outwboot_n=",
                             parm$n[i],"_seed=",parm$seed[i],
                             "_Q=",parm$Q[i],"_g=",parm$g[i],
                             "_cvFolds=",parm$cv[i],".RData.tmp"))
-    file.rename(paste0("~/drinf/out/out_n=",
+    file.rename(paste0("~/drinf/out/outwboot_n=",
                        parm$n[i],"_seed=",parm$seed[i],
                        "_Q=",parm$Q[i],"_g=",parm$g[i],"_cvFolds=",parm$cv[i],
                        ".RData.tmp"),
-                paste0("~/drinf/out/out_n=",
+                paste0("~/drinf/out/outwboot_n=",
                        parm$n[i],"_seed=",parm$seed[i],
                        "_Q=",parm$Q[i],"_g=",parm$g[i],"_cvFolds=",parm$cv[i],
                        ".RData"))
@@ -208,50 +209,62 @@ if (args[1] == 'run') {
 
 # merge job ###########################
 if (args[1] == 'merge') {   
-    # ns <- c(500, 1000, 5000)
-    # bigB <- 1000
-    # g <- c("SL.hal9001","SL.glm")
-    # Q <- c("SL.hal9001","SL.glm")
-    # # g <- c("SL.glm.interaction")
-    # # Q <- c("SL.glm.interaction")
-    # parm <- expand.grid(seed=1:bigB,
-    #                     n=ns, g = g, Q = Q,
-    #                     stringsAsFactors = FALSE)
-    # rslt <- NULL
-    # for(i in 1:nrow(parm)){
-    #     tmp_1 <- tryCatch({
-    #         load(paste0("~/drinf/out/out_n=",
-    #                     parm$n[i],"_seed=",parm$seed[i],
-    #                    "_Q=",parm$Q[i],"_g=",parm$g[i],
-    #                    "_cvFolds=1.RData"))
-    #         out
-    #     }, error=function(e){
-    #       rep(NA,17 + 25*2)
-    #     })
-    #     tmp_5 <- tryCatch({
-    #         load(paste0("~/drinf/out/out_n=",
-    #                     parm$n[i],"_seed=",parm$seed[i],
-    #                    "_Q=",parm$Q[i],"_g=",parm$g[i],
-    #                    "_cvFolds=5.RData"))
-    #         out[-(1:5)]
-    #     }, error=function(e){
-    #       rep(NA, 17 + 25*2 - 5)
-    #     })
-    #     tmp <- c(tmp_1, tmp_5)
-    #     rslt <- rbind(rslt, tmp)
-    # }
-    # # format
-    # out <- data.frame(rslt)
-    # sim_names <- c("drtmle", "drtmle_cil","drtmle_ciu",
-    #                    paste0("drtmle_maxIter",1:10),
-    #                    "drtmle_cov",
-    #                    "ltmle","ltmle_cil","ltmle_ciu","ltmle_cov",
-    #                    "drtmle_iter", "origIC","missQIC","missgIC")
-    # colnames(out) <- c("seed","n","truth","Q","g", sim_names,
-    #                    paste0("cv_", sim_names))
+    ns <- c(500,1000,5000,9000)
+    bigB <- 1000
+    g <- c("SL.hal9001","SL.glm")
+    Q <- c("SL.hal9001","SL.glm")
+    cv <- c(1)
+    # g <- c("SL.glm.interaction")
+    # Q <- c("SL.glm.interaction")
+    parm <- expand.grid(seed=1:bigB,
+                        n=ns, g = g, Q = Q, cv = cv, 
+                        stringsAsFactors = FALSE)
+    # n = 500 => up to 49 seconds => get about 20 done per run
+    # n = 1000 => up to 147 seconds = 2.5 minutes => get about 10 done per run
+    # n = 5000 => just do one per run
+    parm$g[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
+    parm$Q[(parm$g == "SL.glm.interaction" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
 
-    # out[,(1:ncol(out))[c(-4,-5)]] <- apply(out[,(1:ncol(out))[c(-4,-5)]], 2, as.numeric)
-    # save(out, file=paste0('~/drinf/out/allOut_pluscv.RData'))
+    rslt <- matrix(NA, nrow = nrow(parm), ncol = 66)
+    for(i in 1:nrow(parm)){
+        tmp_1 <- tryCatch({
+            load(paste0("~/drinf/out/outwboot_n=",
+                        parm$n[i],"_seed=",parm$seed[i],
+                       "_Q=",parm$Q[i],"_g=",parm$g[i],
+                       "_cvFolds=1.RData"))
+            out
+        }, error=function(e){
+          rep(NA, 66)
+        })
+        # tmp_5 <- tryCatch({
+        #     load(paste0("~/drinf/out/out_n=",
+        #                 parm$n[i],"_seed=",parm$seed[i],
+        #                "_Q=",parm$Q[i],"_g=",parm$g[i],
+        #                "_cvFolds=5.RData"))
+        #     out[-(1:5)]
+        # }, error=function(e){
+        #   rep(NA, 17 + 25*2 - 5)
+        # })
+        # tmp <- c(tmp_1, tmp_5)
+        rslt[i,] <- tmp_1
+    }
+    # # format
+    out <- data.frame(rslt)
+    sim_names <- c("seed","n","truth","Q","g",
+                   paste0("max_n_", c("est","cil","ciu","cov")),
+                   paste0("max_sqrt_n_", c("est","cil","ciu","cov")),
+                   paste0("norm_n_", c("est","cil","ciu","cov")),
+                   paste0("norm_sqrt_n_", c("est","cil","ciu","cov")),
+                   paste0("drtmle_maxIter",1:15),
+                   paste0("se_drtmle_maxIter",1:15),
+                   "ltmle","ltmle_cil","ltmle_ciu","ltmleboot_cil", 
+                   "ltmleboot_ciu", "ltmle_cov", "ltmleboot_cov",
+                   paste0(c("total_","sqrt_n_max_","n_max_","n_norm_","sqrt_n_norm_")),
+                   "origIC","missQIC","missgIC")
+    colnames(out) <- sim_names
+
+    out[,(1:ncol(out))[c(-4,-5)]] <- apply(out[,(1:ncol(out))[c(-4,-5)]], 2, as.numeric)
+    save(out, file=paste0('~/drinf/out/initboot_allOut_nocv.RData'))
 
     # # post processing
     # getBias <- function(out, n, Q, g){
@@ -268,21 +281,34 @@ if (args[1] == 'merge') {
     # getBias(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
     # getBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
     # getBias(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
-
-    # getRootNBias <- function(out, n, Q, g){
-    #   rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
-    #   rootn_bias <- by(rslt, rslt$n, function(x){
-    #     bias_drtmle <- sqrt(x$n[1])*mean(x$drtmle - x$truth, na.rm = TRUE)
-    #     bias_drtmle_1 <- mean(x$drtmle_maxIter1 - x$truth, na.rm = TRUE)        
-    #     bias_ltmle <- sqrt(x$n[1])*mean(x$ltmle - x$truth, na.rm = TRUE)
-    #     c(nrow(x), bias_drtmle, bias_drtmle_1, bias_ltmle)
-    #   })
-    #   rootn_bias
-    # }
-    # getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
-    # getRootNBias(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
-    # getRootNBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
-    # getRootNBias(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
+    getRootNBias <- function(out, n, Q, g, est = c("max_sqrt_n_est",
+                                                   "norm_sqrt_n_est",
+                                                   paste0("drtmle_maxIter",1:10),
+                                                   "ltmle")){
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
+      rootn_bias <- by(rslt, rslt$n, function(x){
+        o <- matrix(c(nrow(x), rep(NA, length(est))), nrow = 1)
+        ct <- 1
+        for(e in est){
+          # browser()
+          ct <- ct + 1
+          o[ct] <- sqrt(x$n[1])*mean(x[,e] - x$truth, na.rm = TRUE)
+        }
+        colnames(o) <- c("nsim", est)
+        o
+      })
+      ou <- Reduce(rbind, rootn_bias)
+      ou <- cbind(unique(rslt$n), ou)
+      ou
+    }
+    getRootNBias(out, n = c(500,1000,5000,9000), Q = "SL.hal9001", g = "SL.glm")
+                 # est = paste0("cv_drtmle_maxIter", 1:25))
+    getRootNBias(out, n = c(500,1000,5000,9000), g = "SL.hal9001", Q = "SL.glm")
+                 # est = paste0("cv_drtmle_maxIter", 1:25))
+    getRootNBias(out, n = c(500,1000,5000,9000), Q = "SL.hal9001", g = "SL.hal9001")
+                 # est = paste0("cv_drtmle_maxIter", 1:25))
+    getRootNBias(out, n = c(500,1000,5000,9000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
+                 # est = paste0("cv_drtmle_maxIter", 1:25))
 
     # getCov <- function(out, n, Q, g){
     #   rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
