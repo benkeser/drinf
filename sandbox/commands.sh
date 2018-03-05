@@ -2,20 +2,21 @@
 # commands for scp'ing sce and cent over
 #-----------------------------------------
 cd ~/Dropbox/R/drinf/sandbox
-scp  cent* sce* makeData.R dbenkese@snail.fhcrc.org:~/drinf
+scp cent_all_norestart1.R sce_all_norestart.sh makeData.R dbenkese@snail.fhcrc.org:~/drinf
 
 ssh dbenkese@snail.fhcrc.org
 cd drinf
-scp cent* sce* makeData.R dbenkese@rhino.fhcrc.org:~/drinf
+scp cent_all_norestart1.R sce_all_norestart.sh makeData.R dbenkese@rhino.fhcrc.org:~/drinf
 
 ssh dbenkese@rhino.fhcrc.org
 cd drinf
 chmod +x cent* sce*
-./sce_9000.sh ./cent_9000.R fix_9000_v1
-./sce_1000.sh ./cent_1000.R fix_1000_v1
-./sce_5000.sh ./cent_5000.R fix_5000_v1
-./sce_500.sh ./cent_500.R fix_500_v1
-./sce_all.sh ./cent_all.R boot_v1
+# ./sce_9000.sh ./cent_9000.R fix_9000_v1
+# ./sce_1000.sh ./cent_1000.R fix_1000_v1
+# ./sce_5000.sh ./cent_5000.R fix_5000_v1
+# ./sce_500.sh ./cent_500.R fix_500_v1
+# ./sce_all.sh ./cent_all.R noboot_v4
+./sce_all_norestart.sh ./cent_all_norestart1.R run_6
 
 #-----------------------------------------
 # commands to get into rhino and load R

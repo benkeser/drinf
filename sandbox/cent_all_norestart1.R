@@ -39,8 +39,11 @@ redo_parm <- out[is.na(out$truth),c(1,2,4,5)]
 redo_parm$cv <- 1
 redo_parm$Q <- as.character(redo_parm$Q)
 redo_parm$g <- as.character(redo_parm$g)
-# only do seed 1:100 
+# only do seed 1:500
 parm <- redo_parm[redo_parm$seed <= 500, ]
+
+# only do first 100
+parm <- parm[1:198,]
 
 # parm <- parm[1,,drop=FALSE]
 # source in simulation Functions

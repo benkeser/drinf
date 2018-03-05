@@ -1,12 +1,12 @@
 #!/bin/bash
 
-ANALYSIS='noboot_v4'      # change for every analysis you run (2nd arg)
+ANALYSIS='run_7'      # change for every analysis you run (2nd arg)
 MAILDOM='@fhcrc.org'   # your email domain (for receiving error messages)
 MAXARRAYSIZE=1000          # set to 0 if you are not using slurm job arrays
 MYSCRATCH="./scratch"  # location of your persistent scratch dir
-PARTITION='restart'        # the queue on your cluster that allows short jobs
+PARTITION='campus'        # the queue on your cluster that allows short jobs
 RESULTDIR="./out"  # This is a folder in permanent storage
-SCRIPT='./cent_all.R'      # your code as (R or Python) script (1st arg)
+SCRIPT='./cent_all_norestart1.R'      # your code as (R or Python) script (1st arg)
 STEPSIZE=1             # number of consecutive loops in SCRIPT to run in
                            # the same job / node (increase for short jobs)
                            # MAXARRAYSIZE MUST be divisible by STEPSIZE
@@ -59,7 +59,7 @@ if [[ -z $RETRYFAILED ]]; then
         fi
         echo "  submitting ${SCRIPT} run in ${MYSCRATCH} with "
         echo "    STEPSIZE ${STEPSIZE}, arrid ${arrid} depends on job ${waitforjobs}..."
-        sbatch --dependency=afterok:${waitforjobs} --job-name=${ANALYSIS} \
+        sbatch --job-name=${ANALYSIS} \
                --array=1-${arrupper}:${STEPSIZE} --partition=${PARTITION} \
                --mail-type=FAIL --mail-user="${username}${MAILDOM}" --time=0-1 \
                --output="${MYSCRATCH}/out/${ANALYSIS}.run.${arrid}_%a_%A.%J" \

@@ -191,6 +191,7 @@ estimateQ <- function(
         if(!all1){
           train_Q2n <- Q2n_all[folds != validFold]
         }else{
+          
           train_Q2n <- Q2n 
         }
         
