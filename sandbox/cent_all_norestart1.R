@@ -49,9 +49,10 @@ parm <- parm[1:198,]
 # source in simulation Functions
 source("~/drinf/makeData.R")
 # load drinf
-library(drinf, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.2/")
-library(gam, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.2/")
 library(hal9001, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.2/")
+
+library(drinf, lib.loc = "/home/dbenkese/R/x86_64-pc-linux-gnu-library/3.4")
+library(gam, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.2/")
 library(SuperLearner)
 library(methods)
 
