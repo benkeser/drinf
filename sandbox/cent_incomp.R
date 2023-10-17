@@ -233,16 +233,16 @@ if (args[1] == 'merge') {
   parm$g[(parm$g == "SL.glm" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
   parm$Q[(parm$g == "SL.glm.interaction" & parm$Q == "SL.glm")] <- "SL.glm.interaction"
 
-    rslt <- matrix(NA, nrow = nrow(parm), ncol = 43)
+    rslt <- matrix(NA, nrow = nrow(parm), ncol = 44)
     for(i in 1:nrow(parm)){
         tmp_1 <- tryCatch({
             load(paste0("~/drinf/out/outincomp_n=",
                         parm$n[i],"_seed=",parm$seed[i],
                        "_Q=",parm$Q[i],"_g=",parm$g[i],
                        "_cvFolds=1.RData"))
-            out
+            out[1:44]
         }, error=function(e){
-          c(parm$seed[i], parm$n[i], NA, parm$Q[i], parm$g[i], rep(NA, 43 - 5))
+          c(parm$seed[i], parm$n[i], NA, parm$Q[i], parm$g[i], rep(NA, 44 - 5))
         })
         # tmp_5 <- tryCatch({
         #     load(paste0("~/drinf/out/out_n=",
@@ -292,7 +292,35 @@ if (args[1] == 'merge') {
     # getBias(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
     # getBias(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
     # getBias(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
-    getRootNBias <- function(out, n, Q, g, est = c("max_sqrt_n_est",
+    
+    # getIC <- function(out, n, Q, g){
+    #   rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
+    #   ic <-  by(rslt, rslt$n, function(x){
+    #     colMeans(x[ , grepl("IC", colnames(x))])
+    #   })
+    #   ic
+    # }
+    # getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
+    # getIC(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
+    # getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+    # getIC(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
+
+
+}
+
+if(FALSE){
+  # local post-processing
+  setwd("~/Dropbox/R/drinf/sandbox/results")
+  incomp <- get(load("allOut_incomp.RData"))
+  comp <- get(load("noboot_allOut_nocv_newest.RData"))
+  incomp$max_sqrt_n_se <- with(incomp, (max_sqrt_n_ciu - max_sqrt_n_cil)/(2*1.96))
+  incomp$ltmle_se <- with(incomp, (ltmle_ciu - ltmle_cil)/(2*1.96))
+  comp$max_sqrt_n_se <- with(comp, (max_sqrt_n_ciu - max_sqrt_n_cil)/(2*1.96))
+  comp$ltmle_se <- with(comp, (ltmle_ciu - ltmle_cil)/(2*1.96))
+  comp$max_sqrt_n <- comp$max_sqrt_n_est
+  incomp$max_sqrt_n <- incomp$max_sqrt_n_est
+
+  getRootNBias <- function(out, n, Q, g, est = c("max_sqrt_n_est",
                                                    "norm_sqrt_n_est",
                                                    paste0("drtmle_maxIter",1:5),
                                                    "ltmle")){
@@ -310,24 +338,17 @@ if (args[1] == 'merge') {
       })
       ou <- Reduce(rbind, rootn_bias)
       ou <- cbind(unique(rslt$n), ou)
+      colnames(ou)[1] <- "n"
       ou
-    }
-    getRootNBias(out, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm")
-                 # est = paste0("cv_drtmle_maxIter", 1:25))
-    getRootNBias(out, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm")
-                 # est = paste0("cv_drtmle_maxIter", 1:25))
-    getRootNBias(out, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.hal9001")
-                 # est = paste0("cv_drtmle_maxIter", 1:25))
-    getRootNBias(out, n = c(500,1000,5000,7000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
-                 # est = paste0("cv_drtmle_maxIter", 1:25))
+  }
 
-    getCov <- function(out, n, Q, g,est = c("max_sqrt_n",
+  getCov <- function(out, n, Q, g,est = c("max_sqrt_n",
                                              "norm_sqrt_n",
                                              paste0("drtmle_maxIter",1:5),
                                              "ltmle")){
       rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
       cov <- by(rslt, rslt$n, function(x){
-        o <- matrix(c(sum(!is.na(x$truth)), rep(NA, length(est) + 1)), nrow = 1)
+        o <- matrix(c(sum(!is.na(x$truth)), rep(NA, 2*length(est) + 1)), nrow = 1)
         ct <- 1
         for(e in est){
           # browser()
@@ -335,42 +356,177 @@ if (args[1] == 'merge') {
           cov_avail <- any(grepl(paste0(e,"_cov"), colnames(rslt)))
           if(cov_avail){
             o[,ct] <- mean(x[,paste0(e,"_cov")], na.rm = TRUE)
+            o[,ct+length(est)+1] <- median(x[,paste0(e,"_ciu")] - x[,paste0(e,"_cil")], na.rm = TRUE)
           }else{
             this_est <- x[,paste0(e)]
             this_se <- x[,paste0("se_",e)]
             cil <- this_est - 1.96*this_se; ciu <- this_est + 1.96*this_se
-            o[,ct] <- mean(cil < x$truth[1] & ciu > x$truth[1], na.rm = TRUE)
+            width <- ciu - cil
+              o[,ct] <- mean(cil < x$truth[!is.na(x$truth)][1] & ciu > x$truth[!is.na(x$truth)][1], na.rm = TRUE)
+            o[,ct+length(est)+1] <- median(width, na.rm = TRUE)
           }
         }
         # add in ltmle with mc standard deviation interval
         sd_ltmle <- sd(x$ltmle, na.rm = TRUE)
         cil <- x$ltmle - 1.96 * sd_ltmle
         ciu <- x$ltmle + 1.96 * sd_ltmle
-        o[,ct + 1] <- mean(cil < x$truth[1] & ciu > x$truth[1], na.rm = TRUE)
+        o[,ct + 1] <- mean(cil < x$truth[!is.na(x$truth)][1] & ciu > x$truth[!is.na(x$truth)][1], na.rm = TRUE)
 
-        colnames(o) <- c("nsim", est, "ltmle_mc")
+        colnames(o) <- c("nsim", est, "ltmle_mc",paste0("width_",est))
         o
       })
       ou <- Reduce(rbind, cov)
       ou <- cbind(unique(rslt$n), ou)
+      colnames(ou)[1] <- "n"
       ou
     }
-    getCov(out, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm")
-    getCov(out, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm")
-    getCov(out, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.hal9001")
-    getCov(out, n = c(500,1000,5000,7000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
 
-    # getIC <- function(out, n, Q, g){
-    #   rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
-    #   ic <-  by(rslt, rslt$n, function(x){
-    #     colMeans(x[ , grepl("IC", colnames(x))])
-    #   })
-    #   ic
-    # }
-    # getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
-    # getIC(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
-    # getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
-    # getIC(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
+
+    comp_Qrgw <- getRootNBias(comp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",
+                 est = c("max_sqrt_n_est","ltmle"))
+    incomp_Qrgw <- getRootNBias(incomp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",
+                 est = c("max_sqrt_n_est"))
+    Qrgw_bias <- cbind(comp_Qrgw, incomp_Qrgw[,3])
+    comp_Qwgr <- getRootNBias(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",
+                 est = c("max_sqrt_n_est","ltmle"))
+    incomp_Qwgr <- getRootNBias(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",
+                 est = c("max_sqrt_n_est"))
+    Qwgr_bias <- cbind(comp_Qwgr, incomp_Qwgr[,3])
+    comp_Qrgr <- getRootNBias(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",
+                 est = c("max_sqrt_n_est","ltmle"))
+    incomp_Qrgr <- getRootNBias(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",
+                 est = c("max_sqrt_n_est"))
+    Qrgr_bias <- cbind(comp_Qrgr, incomp_Qrgr[,3])
+
+    comp_Qrgw <- getCov(comp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",
+                 est = c("max_sqrt_n","ltmle"))
+    incomp_Qrgw <- getCov(incomp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",
+                 est = c("max_sqrt_n"))
+    Qrgw_cov <- cbind(comp_Qrgw, incomp_Qrgw[,3:5])
+    comp_Qwgr <- getCov(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",
+                 est = c("max_sqrt_n","ltmle"))
+    incomp_Qwgr <- getCov(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",
+                 est = c("max_sqrt_n"))
+    Qwgr_cov <- cbind(comp_Qwgr, incomp_Qwgr[,3:5])
+    comp_Qrgr <- getCov(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",
+                 est = c("max_sqrt_n","ltmle"))
+    incomp_Qrgr <- getCov(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",
+                 est = c("max_sqrt_n"))
+    Qrgr_cov <- cbind(comp_Qrgr, incomp_Qrgr[,3:5])
+
+    pdf("~/Dropbox/Dissertation/Double-robust inference in longitudinal settings/manuscript/simulation_results.pdf",
+        width = 10*0.85, height = 8*0.85)
+    layout(matrix(1:9, nrow = 3, byrow = TRUE))
+    par(mar = c(4.1, 4.1, 0.5, 0.6), mgp = c(2.1, 0.5, 0),
+        oma = c(0,2.1,0,0))
+    for(d in c("Qwgr","Qrgw","Qrgr")){
+      this_bias <- eval(parse(text = paste0(d,"_bias")))
+      this_cov <- eval(parse(text = paste0(d,"_cov")))
+      # root-n bias Q right g wrong
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")
+      ct <- 0
+      for(i in (1:(ncol(this_bias)-2) + 2)){
+        ct <- ct + 1
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')
+      }
+      abline(h = 0, lty = 3)
+      if(d == "Qwgr"){
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), 
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))
+      }
+      # coverage Q right g wrong
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),
+           bty = "n", ylab = "Coverage probability", xlab = "n")
+      ct <- 0 
+      for(i in c(3,4,8)){
+        ct <- ct + 1
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")
+      }
+      abline(h = 0.95, lty = 3)
+      # add in ltmle mc intervals
+      if(d == "Qwgr"){
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")
+        legend(x = "bottomleft", bty = "n", pch = c(17),
+               legend = "LTMLE Monte Carlo SE")
+      }
+      
+      # ci width
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),
+           bty = "n", ylab = "Median confidence interval width",
+           xlab = "n")
+      ct <- 0
+      grbg <- c(1,3)
+      for(i in c(6,7,10)){
+        ct <- ct + 1
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")
+      }
+      abline(h = 1, lty = 3)
+      if(d == "Qwgr"){
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","= ",g[0])), at = 0.85)      
+      }else if( d== "Qrgw"){
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","= ", Q[0]*" , g"^"*" != g[0])), at = 0.5)      
+      }else{
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","= ", Q[0]*" , g"^"*","= ",g[0])), at = 0.2)
+      }
+    }
+    dev.off()
+
+
+    # sampling distribution
+    # one sampling distribution plot for all sample sizes
+    makeOneSampDistPlot <- function(out, est, truth = 1.3, add_legend = FALSE,
+                                    g = "SL.glm", Q = "SL.hal9001",
+                                    true_sd = TRUE, ns = c(500,1000,5000,7000)){
+      est_by_n <- by(out, out$n, function(x){ x[x$g == g & x$Q == Q, est] })
+      se_by_n <- by(out, out$n, function(x){ x[x$g == g & x$Q == Q, paste0(est,"_se")] })
+      density_list <- vector(mode = "list", length = 4)
+      ct <- 0
+      for(n in ns){
+        ct <- ct + 1
+        if(true_sd){
+          std_est <- (est_by_n[[ct]] - truth)/sd(est_by_n[[ct]], na.rm = TRUE)
+        }else{
+          std_est <- (est_by_n[[ct]] - truth)/se_by_n[[ct]]
+        }
+        density_list[[ct]] <- density(std_est[!is.na(std_est)])
+      }
+      y_lim <- range(unlist(lapply(density_list,"[[","y")))
+      plot(0,0,pch = "", xlab = "Standardized estimator", ylab = "Density",
+           bty = "n", xlim = c(-4,4), ylim = c(0,0.5))
+      my_col <- paste0("gray",c(90, 60, 35, 5))
+      for(i in 1:4){
+        lines(density_list[[i]], col = my_col[i])
+      }
+      x_seq <- seq(-4,4,length =1000)
+      lines(x = x_seq, y = dnorm(x_seq), lty = 3)
+      if(add_legend){
+        legend(x = "topleft", bty = "n", main = "n", c(500,1000,5000,7000),
+               col = my_col)
+      }
+    }
+
+
+    makeOneSampDistPlot(out = comp, est = "max_sqrt_n", g = "SL.glm", Q = "SL.hal9001", true_sd = FALSE)
+    makeOneSampDistPlot(out = incomp, est = "max_sqrt_n", g = "SL.glm", Q = "SL.hal9001", true_sd = FALSE)
+
+    makeOneSampDistPlot(out = incomp, est = "ltmle", g = "SL.hal9001", Q = "SL.hal9001", true_sd = FALSE, ns = c(500,1000))
+    makeOneSampDistPlot(out = incomp, est = "max_sqrt_n", g = "SL.hal9001", Q = "SL.hal9001", true_sd = FALSE, ns = c(500,1000))
+
+    makeOneSampDistPlot(out = comp, est = "max_sqrt_n", g = "SL.glm", Q = "SL.hal9001")
+    makeOneSampDistPlot(out = incomp, est = "max_sqrt_n", g = "SL.glm", Q = "SL.hal9001")
+    makeOneSampDistPlot(out = incomp, est = "ltmle", Q = "SL.glm", g = "SL.hal9001")
+
+
+    makeOneSampDistPlot(out = incomp, est = "max_sqrt_n_est", g = "SL.glm", Q = "SL.hal9001")
+
+
+    makeOneSampDistPlot(out = incomp, est = "max_sqrt_n_est")
+    makeOneSampDistPlot(out = incomp, est = "max_sqrt_n_est")
+
+
+    makeOneSampDistPlot(out = comp, est = "max_n_est")
+
 
 
 }

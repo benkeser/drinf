@@ -1,0 +1,1882 @@
+make_boxplot <- function(measure = "eif_1", eif = TRUE, ylim = c(-2,2), #
+                           ylab = expression(sqrt(n)*" "*P[n]*D*"("*Q[n]*","*G[0]*")")){#
+    if(eif){#
+      boxplot(as.formula(paste0("I(sqrt(n)*",measure, ") ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 100,#
+              ylab = ylab, ylim = ylim, xlim = c(0, 2500), border = paste0("gray",c(75,65,55,45)))#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+    }else{#
+      boxplot(as.formula(paste0(measure," ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 100,#
+              ylab = ylab, ylim = ylim, xlim = c(0, 2500), border = paste0("gray",c(75,65,55,45)))#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(x[[measure]], na.rm = TRUE)}))#
+    }#
+    x_seq <- seq(100,2100, length = 5000)#
+    if(eif){#
+      # lines(x = x_seq, y = 1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      # lines(x = x_seq, y = -1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      abline(h = 0, lty = 3)#
+    }else{#
+      abline(h = 4, lty = 3)#
+    }#
+    points(x = c(250, 500, 1000, 2000), y = this_mean, pch = 19, col = paste0("gray",c(75,65,55,45)), cex = 1.2)#
+  }
+layout(matrix(1:6, byrow = TRUE, nrow = 2))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot("l1_1", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_2", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_3", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+mtext(outer = TRUE, side = 3, at = 0.18, "C = 0.5")
+mtext(outer = TRUE, side = 3, at = 0.52, "C = 1")
+mtext(outer = TRUE, side = 3, at = 0.84, "C = 2")
+names(rslt)
+est <- "est_1"
+dens_list <- by(rslt, rslt$n, function(x){ density(x[[est]])})
+dens_list <- by(rslt, rslt$n, function(x){ density(x[[est]], na.rm = TRUE)})
+plot(dens_list[[1]])
+dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})
+plot(dens_list[[1]])
+names(dens_list[[1]])
+ally <- unlist(lapply(dens_list, "[[", "y"))
+ally
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", xlab = expression(sqrt(n)*"("*psi[n]-psi[0],")"))#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+  }
+make_density
+make_density()
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0],")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+  }
+make_density()
+n <- 1e6
+# simulate data#
+    n <- parm$n[i]#
+    W <- runif(n, -pi, pi)#
+    g0 <- plogis(1 + W)#
+    A <- rbinom(n, 1, g0)#
+    Q0 <- sin(2*W)#
+    Y <- Q0 + rnorm(n, 1, 1)
+var( A/g0 * (Y - Q0) + Q0 - mean(Q0))
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL,#
+                           var_eif = 4.21 # computed numerically#
+                           ){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0],")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+    x_seq <- seq(xlim[1], xlim[2], length = 5000)#
+    lines(dnorm(x_seq, mean = 0, sd = sqrt(var_eif)), lty = 3)#
+    legend(x = "topleft", bty = "n", legend = c(250, 500, 1000, 2000, "N(0,Var(EIF))"),#
+           col = c(mycol,1), lty = c(1,1,1,1,3))#
+  }
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot("l1_1", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_2", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_3", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+mtext(outer = TRUE, side = 3, at = 0.18, "C = 0.5")
+mtext(outer = TRUE, side = 3, at = 0.52, "C = 1")
+mtext(outer = TRUE, side = 3, at = 0.84, "C = 2")
+make_density("est_1")
+make_density("est_2")
+make_density("est_3")
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL,#
+                           var_eif = 4.21, # computed numerically#
+                           legend = FALSE, ... #
+                           ){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0],")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+    x_seq <- seq(xlim[1], xlim[2], length = 5000)#
+    lines(dnorm(x_seq, mean = 0, sd = sqrt(var_eif)), lty = 3)#
+    if(legend){#
+      legend(x = "topleft", bty = "n", legend = c(250, 500, 1000, 2000, "N(0,Var(EIF))"),#
+             col = c(mycol,1), lty = c(1,1,1,1,3))#
+    }#
+  }
+make_density("est_1", legend = TRUE)
+debug(make_density)
+make_density("est_1", legend = TRUE)
+xlim
+x_seq
+dnorm(x_seq, mean = 0, sd = sqrt(var_eif))
+Q
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL,#
+                           var_eif = 4.21, # computed numerically#
+                           legend = FALSE, ... #
+                           ){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0],")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+    x_seq <- seq(xlim[1], xlim[2], length = 5000)#
+    lines(x = x_seq, y = dnorm(x_seq, mean = 0, sd = sqrt(var_eif)), lty = 3)#
+    if(legend){#
+      legend(x = "topleft", bty = "n", legend = c(250, 500, 1000, 2000, "N(0,Var(EIF))"),#
+             col = c(mycol,1), lty = c(1,1,1,1,3))#
+    }#
+  }
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot("l1_1", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_2", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_3", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+mtext(outer = TRUE, side = 3, at = 0.18, "C = 0.5")
+mtext(outer = TRUE, side = 3, at = 0.52, "C = 1")
+mtext(outer = TRUE, side = 3, at = 0.84, "C = 2")
+make_density("est_1", legend = TRUE)
+make_density("est_2")
+make_density("est_3")
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL,#
+                           var_eif = 4.21, # computed numerically#
+                           legend = FALSE, ... #
+                           ){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0]*")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+    x_seq <- seq(xlim[1], xlim[2], length = 5000)#
+    lines(x = x_seq, y = dnorm(x_seq, mean = 0, sd = sqrt(var_eif)), lty = 3)#
+    if(legend){#
+      legend(x = "topleft", bty = "n", legend = c(250, 500, 1000, 2000, "N(0,Var(EIF))"),#
+             col = c(mycol,1), lty = c(1,1,1,1,3))#
+    }#
+  }
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot("l1_1", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_2", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_3", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+mtext(outer = TRUE, side = 3, at = 0.18, "C = 0.5")
+mtext(outer = TRUE, side = 3, at = 0.52, "C = 1")
+mtext(outer = TRUE, side = 3, at = 0.84, "C = 2")
+make_density("est_1", legend = TRUE)
+make_density("est_2")
+make_density("est_3")
+head(Y)
+head(Q0W)
+W <- runif(n, -pi, pi)
+g0 <- plogis(1 + W)
+A <- rbinom(n, 1, g0)
+Q0 <- 1 + sin(2*W)
+Y <- Q0 + rnorm(n, 0, 1)
+var(A / g0 * (Y - Q0) + Q0 - mean(Q0))
+mean(Q0)
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL,#
+                           var_eif = 2.86, # computed numerically#
+                           legend = FALSE, ... #
+                           ){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0]*")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+    x_seq <- seq(xlim[1], xlim[2], length = 5000)#
+    lines(x = x_seq, y = dnorm(x_seq, mean = 0, sd = sqrt(var_eif)), lty = 3)#
+    if(legend){#
+      legend(x = "topleft", bty = "n", legend = c(250, 500, 1000, 2000, "N(0,Var(EIF))"),#
+             col = c(mycol,1), lty = c(1,1,1,1,3))#
+    }#
+  }
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot("l1_1", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_2", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_3", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+mtext(outer = TRUE, side = 3, at = 0.18, "C = 0.5")
+mtext(outer = TRUE, side = 3, at = 0.52, "C = 1")
+mtext(outer = TRUE, side = 3, at = 0.84, "C = 2")
+make_density("est_1", legend = TRUE)
+make_density("est_2")
+make_density("est_3")
+layout(matrix(1:9, byrow = TRUE, nrow = 3))#
+  par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))#
+  make_boxplot("eif_1", ylim = c(-1.5,3))#
+  make_boxplot("eif_2", ylim = c(-1.5,3))#
+  make_boxplot("eif_3", ylim = c(-1.5,3))#
+  make_boxplot("l1_1", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")#
+  make_boxplot("l1_2", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")#
+  make_boxplot("l1_3", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")#
+  mtext(outer = TRUE, side = 3, at = 0.18, "C = 0.5")#
+  mtext(outer = TRUE, side = 3, at = 0.52, "C = 1")#
+  mtext(outer = TRUE, side = 3, at = 0.84, "C = 2")#
+  make_density("est_1", legend = TRUE, ylim = c(0,0.25))#
+  make_density("est_2", ylim = c(0,0.25))#
+  make_density("est_3", ylim = c(0,0.25))
+make_boxplot <- function(measure = "eif_1", eif = TRUE, ylim = c(-2,2), #
+                           ylab = expression(sqrt(n)*" "*P[n]*D*"("*Q[n]*","*G[0]*")")){#
+    if(eif){#
+      boxplot(as.formula(paste0("I(sqrt(n)*",measure, ") ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 100,#
+              ylab = ylab, ylim = ylim, xlim = c(0, 2500), border = paste0("gray",c(75,65,55,45)))#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+    }else{#
+      boxplot(as.formula(paste0(measure," ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 100,#
+              ylab = ylab, ylim = ylim, xlim = c(0, 2500), border = paste0("gray",c(75,65,55,45)))#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(x[[measure]], na.rm = TRUE)}))#
+    }#
+    x_seq <- seq(100,2100, length = 5000)#
+    if(eif){#
+      # lines(x = x_seq, y = 1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      # lines(x = x_seq, y = -1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      abline(h = 0, lty = 3)#
+    }else{#
+      abline(h = 4, lty = 3)#
+    }#
+    points(x = c(250, 500, 1000, 2000), y = this_mean, pch = 19, col = paste0("gray",c(75,65,55,45)), cex = 1.2)#
+    text(xpd = TRUE, x = c(250,500,1000,2000), y = ylim[1], #
+         paste0(this_mean, "(", this_se, ")"))#
+  }
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot <- function(measure = "eif_1", eif = TRUE, ylim = c(-2,2), #
+                           ylab = expression(sqrt(n)*" "*P[n]*D*"("*Q[n]*","*G[0]*")")){#
+    if(eif){#
+      boxplot(as.formula(paste0("I(sqrt(n)*",measure, ") ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 100,#
+              ylab = ylab, ylim = ylim, xlim = c(0, 2500), border = paste0("gray",c(75,65,55,45)))#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+    }else{#
+      boxplot(as.formula(paste0(measure," ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 100,#
+              ylab = ylab, ylim = ylim, xlim = c(0, 2500), border = paste0("gray",c(75,65,55,45)))#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(x[[measure]], na.rm = TRUE)}))#
+    }#
+    x_seq <- seq(100,2100, length = 5000)#
+    if(eif){#
+      # lines(x = x_seq, y = 1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      # lines(x = x_seq, y = -1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      abline(h = 0, lty = 3)#
+    }else{#
+      abline(h = 4, lty = 3)#
+    }#
+    points(x = c(250, 500, 1000, 2000), y = this_mean, pch = 19, col = paste0("gray",c(75,65,55,45)), cex = 1.2)#
+    text(xpd = TRUE, x = c(250,500,1000,2000), y = ylim[1], #
+         paste0(round(this_mean,2), "(", round(this_se,2), ")"))#
+  }
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL,#
+                           var_eif = 2.86, # computed numerically#
+                           legend = FALSE, ... #
+                           ){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0]*")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+    x_seq <- seq(xlim[1], xlim[2], length = 5000)#
+    lines(x = x_seq, y = dnorm(x_seq, mean = 0, sd = sqrt(var_eif)), lty = 3)#
+    if(legend){#
+      legend(x = "topleft", bty = "n", legend = c(250, 500, 1000, 2000, "N(0,Var(EIF))"),#
+             col = c(mycol,1), lty = c(1,1,1,1,3))#
+    }#
+  }
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot("l1_1", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_2", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_3", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+?boxplot
+make_boxplot <- function(measure = "eif_1", eif = TRUE, ylim = c(-2,2), #
+                           ylab = expression(sqrt(n)*" "*P[n]*D*"("*Q[n]*","*G[0]*")")){#
+    if(eif){#
+      boxplot(as.formula(paste0("I(sqrt(n)*",measure, ") ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 100,#
+              ylab = ylab, ylim = ylim, xlim = c(0, 2500), border = paste0("gray",c(75,65,55,45)), log = "x")#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+    }else{#
+      boxplot(as.formula(paste0(measure," ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 100, log = "x",#
+              ylab = ylab, ylim = ylim, xlim = c(0, 2500), border = paste0("gray",c(75,65,55,45)))#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(x[[measure]], na.rm = TRUE)}))#
+    }#
+    x_seq <- seq(100,2100, length = 5000)#
+    if(eif){#
+      # lines(x = x_seq, y = 1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      # lines(x = x_seq, y = -1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      abline(h = 0, lty = 3)#
+    }else{#
+      abline(h = 4, lty = 3)#
+    }#
+    points(x = c(250, 500, 1000, 2000), y = this_mean, pch = 19, col = paste0("gray",c(75,65,55,45)), cex = 1.2)#
+    text(xpd = TRUE, x = c(250,500,1000,2000), y = ylim[1], #
+         paste0(round(this_mean,2), "(", round(this_se,2), ")"))#
+  }
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL,#
+                           var_eif = 2.86, # computed numerically#
+                           legend = FALSE, ... #
+                           ){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0]*")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+    x_seq <- seq(xlim[1], xlim[2], length = 5000)#
+    lines(x = x_seq, y = dnorm(x_seq, mean = 0, sd = sqrt(var_eif)), lty = 3)#
+    if(legend){#
+      legend(x = "topleft", bty = "n", legend = c(250, 500, 1000, 2000, "N(0,Var(EIF))"),#
+             col = c(mycol,1), lty = c(1,1,1,1,3))#
+    }#
+  }
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot <- function(measure = "eif_1", eif = TRUE, ylim = c(-2,2), #
+                           ylab = expression(sqrt(n)*" "*P[n]*D*"("*Q[n]*","*G[0]*")")){#
+    if(eif){#
+      boxplot(as.formula(paste0("I(sqrt(n)*",measure, ") ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 100,#
+              ylab = ylab, ylim = ylim, xlim = c(100, 2500), border = paste0("gray",c(75,65,55,45)), log = "x")#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+    }else{#
+      boxplot(as.formula(paste0(measure," ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 100, log = "x",#
+              ylab = ylab, ylim = ylim, xlim = c(100, 2500), border = paste0("gray",c(75,65,55,45)))#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(x[[measure]], na.rm = TRUE)}))#
+    }#
+    x_seq <- seq(100,2100, length = 5000)#
+    if(eif){#
+      # lines(x = x_seq, y = 1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      # lines(x = x_seq, y = -1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      abline(h = 0, lty = 3)#
+    }else{#
+      abline(h = 4, lty = 3)#
+    }#
+    points(x = c(250, 500, 1000, 2000), y = this_mean, pch = 19, col = paste0("gray",c(75,65,55,45)), cex = 1.2)#
+    text(xpd = TRUE, x = c(250,500,1000,2000), y = ylim[1], #
+         paste0(round(this_mean,2), "(", round(this_se,2), ")"))#
+  }
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL,#
+                           var_eif = 2.86, # computed numerically#
+                           legend = FALSE, ... #
+                           ){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0]*")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+    x_seq <- seq(xlim[1], xlim[2], length = 5000)#
+    lines(x = x_seq, y = dnorm(x_seq, mean = 0, sd = sqrt(var_eif)), lty = 3)#
+    if(legend){#
+      legend(x = "topleft", bty = "n", legend = c(250, 500, 1000, 2000, "N(0,Var(EIF))"),#
+             col = c(mycol,1), lty = c(1,1,1,1,3))#
+    }#
+  }
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot <- function(measure = "eif_1", eif = TRUE, ylim = c(-2,2), #
+                           ylab = expression(sqrt(n)*" "*P[n]*D*"("*Q[n]*","*G[0]*")")){#
+    if(eif){#
+      boxplot(as.formula(paste0("I(sqrt(n)*",measure, ") ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 1,#
+              ylab = ylab, ylim = ylim, xlim = c(250, 2500), border = paste0("gray",c(75,65,55,45)), log = "x")#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+    }else{#
+      boxplot(as.formula(paste0(measure," ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 1, log = "x",#
+              ylab = ylab, ylim = ylim, xlim = c(250, 2500), border = paste0("gray",c(75,65,55,45)))#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(x[[measure]], na.rm = TRUE)}))#
+    }#
+    x_seq <- seq(100,2100, length = 5000)#
+    if(eif){#
+      # lines(x = x_seq, y = 1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      # lines(x = x_seq, y = -1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      abline(h = 0, lty = 3)#
+    }else{#
+      abline(h = 4, lty = 3)#
+    }#
+    points(x = c(250, 500, 1000, 2000), y = this_mean, pch = 19, col = paste0("gray",c(75,65,55,45)), cex = 1.2)#
+    text(xpd = TRUE, x = c(250,500,1000,2000), y = ylim[1], #
+         paste0(round(this_mean,2), "(", round(this_se,2), ")"))#
+  }
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL,#
+                           var_eif = 2.86, # computed numerically#
+                           legend = FALSE, ... #
+                           ){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0]*")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+    x_seq <- seq(xlim[1], xlim[2], length = 5000)#
+    lines(x = x_seq, y = dnorm(x_seq, mean = 0, sd = sqrt(var_eif)), lty = 3)#
+    if(legend){#
+      legend(x = "topleft", bty = "n", legend = c(250, 500, 1000, 2000, "N(0,Var(EIF))"),#
+             col = c(mycol,1), lty = c(1,1,1,1,3))#
+    }#
+  }
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot <- function(measure = "eif_1", eif = TRUE, ylim = c(-2,2), #
+                           ylab = expression(sqrt(n)*" "*P[n]*D*"("*Q[n]*","*G[0]*")")){#
+    if(eif){#
+      boxplot(as.formula(paste0("I(sqrt(n)*",measure, ") ~ n")), data = rslt, at = c(250, 500, 1000, 2000),#
+              ylab = ylab, ylim = ylim, xlim = c(250, 2500), border = paste0("gray",c(75,65,55,45)), log = "x")#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+    }else{#
+      boxplot(as.formula(paste0(measure," ~ n")), data = rslt, at = c(250, 500, 1000, 2000), log = "x",#
+              ylab = ylab, ylim = ylim, xlim = c(250, 2500), border = paste0("gray",c(75,65,55,45)))#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(x[[measure]], na.rm = TRUE)}))#
+    }#
+    x_seq <- seq(100,2100, length = 5000)#
+    if(eif){#
+      # lines(x = x_seq, y = 1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      # lines(x = x_seq, y = -1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      abline(h = 0, lty = 3)#
+    }else{#
+      abline(h = 4, lty = 3)#
+    }#
+    points(x = c(250, 500, 1000, 2000), y = this_mean, pch = 19, col = paste0("gray",c(75,65,55,45)), cex = 1.2)#
+    text(xpd = TRUE, x = c(250,500,1000,2000), y = ylim[1], #
+         paste0(round(this_mean,2), "(", round(this_se,2), ")"))#
+  }
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL,#
+                           var_eif = 2.86, # computed numerically#
+                           legend = FALSE, ... #
+                           ){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0]*")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+    x_seq <- seq(xlim[1], xlim[2], length = 5000)#
+    lines(x = x_seq, y = dnorm(x_seq, mean = 0, sd = sqrt(var_eif)), lty = 3)#
+    if(legend){#
+      legend(x = "topleft", bty = "n", legend = c(250, 500, 1000, 2000, "N(0,Var(EIF))"),#
+             col = c(mycol,1), lty = c(1,1,1,1,3))#
+    }#
+  }
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot <- function(measure = "eif_1", eif = TRUE, ylim = c(-2,2), #
+                           ylab = expression(sqrt(n)*" "*P[n]*D*"("*Q[n]*","*G[0]*")")){#
+    if(eif){#
+      boxplot(as.formula(paste0("I(sqrt(n)*",measure, ") ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 0.25,#
+              ylab = ylab, ylim = ylim, xlim = c(250, 2500), border = paste0("gray",c(75,65,55,45)), log = "x")#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+    }else{#
+      boxplot(as.formula(paste0(measure," ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 0.25, log = "x",#
+              ylab = ylab, ylim = ylim, xlim = c(250, 2500), border = paste0("gray",c(75,65,55,45)))#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(x[[measure]], na.rm = TRUE)}))#
+    }#
+    x_seq <- seq(100,2100, length = 5000)#
+    if(eif){#
+      # lines(x = x_seq, y = 1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      # lines(x = x_seq, y = -1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      abline(h = 0, lty = 3)#
+    }else{#
+      abline(h = 4, lty = 3)#
+    }#
+    points(x = c(250, 500, 1000, 2000), y = this_mean, pch = 19, col = paste0("gray",c(75,65,55,45)), cex = 1.2)#
+    text(xpd = TRUE, x = c(250,500,1000,2000), y = ylim[1], #
+         paste0(round(this_mean,2), "(", round(this_se,2), ")"))#
+  }
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL,#
+                           var_eif = 2.86, # computed numerically#
+                           legend = FALSE, ... #
+                           ){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0]*")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+    x_seq <- seq(xlim[1], xlim[2], length = 5000)#
+    lines(x = x_seq, y = dnorm(x_seq, mean = 0, sd = sqrt(var_eif)), lty = 3)#
+    if(legend){#
+      legend(x = "topleft", bty = "n", legend = c(250, 500, 1000, 2000, "N(0,Var(EIF))"),#
+             col = c(mycol,1), lty = c(1,1,1,1,3))#
+    }#
+  }
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot <- function(measure = "eif_1", eif = TRUE, ylim = c(-2,2), #
+                           ylab = expression(sqrt(n)*" "*P[n]*D*"("*Q[n]*","*G[0]*")")){#
+    if(eif){#
+      boxplot(as.formula(paste0("I(sqrt(n)*",measure, ") ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 0.125,#
+              ylab = ylab, ylim = ylim, xlim = c(200, 2500), border = paste0("gray",c(75,65,55,45)), log = "x")#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+    }else{#
+      boxplot(as.formula(paste0(measure," ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 0.125, log = "x",#
+              ylab = ylab, ylim = ylim, xlim = c(200, 2500), border = paste0("gray",c(75,65,55,45)))#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(x[[measure]], na.rm = TRUE)}))#
+    }#
+    x_seq <- seq(100,2100, length = 5000)#
+    if(eif){#
+      # lines(x = x_seq, y = 1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      # lines(x = x_seq, y = -1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      abline(h = 0, lty = 3)#
+    }else{#
+      abline(h = 4, lty = 3)#
+    }#
+    points(x = c(250, 500, 1000, 2000), y = this_mean, pch = 19, col = paste0("gray",c(75,65,55,45)), cex = 1.2)#
+    text(xpd = TRUE, x = c(250,500,1000,2000), y = ylim[1], #
+         paste0(round(this_mean,2), "(", round(this_se,2), ")"))#
+  }
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL,#
+                           var_eif = 2.86, # computed numerically#
+                           legend = FALSE, ... #
+                           ){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0]*")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+    x_seq <- seq(xlim[1], xlim[2], length = 5000)#
+    lines(x = x_seq, y = dnorm(x_seq, mean = 0, sd = sqrt(var_eif)), lty = 3)#
+    if(legend){#
+      legend(x = "topleft", bty = "n", legend = c(250, 500, 1000, 2000, "N(0,Var(EIF))"),#
+             col = c(mycol,1), lty = c(1,1,1,1,3))#
+    }#
+  }
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot <- function(measure = "eif_1", eif = TRUE, ylim = c(-2,2), #
+                           ylab = expression(sqrt(n)*" "*P[n]*D*"("*Q[n]*","*G[0]*")")){#
+    if(eif){#
+      boxplot(as.formula(paste0("I(sqrt(n)*",measure, ") ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 0.125,#
+              ylab = ylab, ylim = ylim, xlim = c(200, 2500), border = paste0("gray",c(75,65,55,45)), log = "x")#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(sqrt(x$n) * x[[measure]], na.rm = TRUE)}))#
+    }else{#
+      boxplot(as.formula(paste0(measure," ~ n")), data = rslt, at = c(250, 500, 1000, 2000),boxwex = 0.125, log = "x",#
+              ylab = ylab, ylim = ylim, xlim = c(200, 2500), border = paste0("gray",c(75,65,55,45)))#
+      this_mean <- unlist(by(rslt, rslt$n, function(x){mean(x[[measure]], na.rm = TRUE)}))#
+      this_se <- unlist(by(rslt, rslt$n, function(x){sd(x[[measure]], na.rm = TRUE)}))#
+    }#
+    x_seq <- seq(100,2100, length = 5000)#
+    if(eif){#
+      # lines(x = x_seq, y = 1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      # lines(x = x_seq, y = -1/(sqrt(x_seq)), col = 2, lwd = 2)#
+      abline(h = 0, lty = 3)#
+    }else{#
+      abline(h = 4, lty = 3)#
+    }#
+    points(x = c(250, 500, 1000, 2000), y = this_mean, pch = 19, col = paste0("gray",c(75,65,55,45)), cex = 1.2)#
+    text(xpd = TRUE, x = c(250,500,1000,2000), y = ylim[1], #
+         paste0(round(this_mean,2), " (", round(this_se,2), ")"))#
+  }
+make_density <- function(est = "est_1", ylim = NULL,xlim = NULL,#
+                           var_eif = 2.86, # computed numerically#
+                           legend = FALSE, ... #
+                           ){#
+    dens_list <- by(rslt, rslt$n, function(x){ density(sqrt(x$n) * (x[[est]] - 1), na.rm = TRUE)})#
+    if(is.null(ylim)){#
+      ylim <- range(unlist(lapply(dens_list, "[[", "y")))#
+    }#
+    if(is.null(xlim)){#
+      xlim <- range(unlist(lapply(dens_list, "[[", "x")))      #
+    }#
+    plot(0,0, xlim = xlim, ylim = ylim, ylab = "Density", #
+         xlab = expression(sqrt(n)*"("*psi[n]-psi[0]*")"), pch = "")#
+    mycol <- paste0("gray",c(75,65,55,45))#
+    for(i in seq_along(dens_list)){#
+      lines(dens_list[[i]], col = mycol[i])#
+    }#
+    x_seq <- seq(xlim[1], xlim[2], length = 5000)#
+    lines(x = x_seq, y = dnorm(x_seq, mean = 0, sd = sqrt(var_eif)), lty = 3)#
+    if(legend){#
+      legend(x = "topleft", bty = "n", legend = c(250, 500, 1000, 2000, "N(0,Var(EIF))"),#
+             col = c(mycol,1), lty = c(1,1,1,1,3))#
+    }#
+  }
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot("l1_1", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_2", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_3", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+mtext(outer = TRUE, side = 3, at = 0.18, "C = 0.5")
+mtext(outer = TRUE, side = 3, at = 0.52, "C = 1")
+mtext(outer = TRUE, side = 3, at = 0.84, "C = 2")
+make_density("est_1", legend = TRUE, ylim = c(0,0.25))
+make_density("est_2", ylim = c(0,0.25))
+make_density("est_3", ylim = c(0,0.25))
+pdf("~/Dropbox/Emory/HAL-MLE/sim_rslt.pdf", width = 9, height = 9)#
+  layout(matrix(1:9, byrow = TRUE, nrow = 3))#
+  par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))#
+  make_boxplot("eif_1", ylim = c(-1.5,3))#
+  make_boxplot("eif_2", ylim = c(-1.5,3))#
+  make_boxplot("eif_3", ylim = c(-1.5,3))#
+  make_boxplot("l1_1", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")#
+  make_boxplot("l1_2", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")#
+  make_boxplot("l1_3", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")#
+  mtext(outer = TRUE, side = 3, at = 0.18, "C = 0.5")#
+  mtext(outer = TRUE, side = 3, at = 0.52, "C = 1")#
+  mtext(outer = TRUE, side = 3, at = 0.84, "C = 2")#
+  make_density("est_1", legend = TRUE, ylim = c(0,0.25))#
+  make_density("est_2", ylim = c(0,0.25))#
+  make_density("est_3", ylim = c(0,0.25))#
+  dev.off()
+pdf("~/Dropbox/Emory/HAL-MLE/sim_rslt.pdf", width = 10, height = 8)
+layout(matrix(1:9, byrow = TRUE, nrow = 3))
+par(mar = c(4.1, 4.1, 0.5, 0.5), oma = c(0,0,2.1,0),#
+      mgp = c(2.1, 0.5, 0))
+make_boxplot("eif_1", ylim = c(-1.5,3))
+make_boxplot("eif_2", ylim = c(-1.5,3))
+make_boxplot("eif_3", ylim = c(-1.5,3))
+make_boxplot("l1_1", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_2", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+make_boxplot("l1_3", ylim = c(0,50), eif = FALSE, ylab = "L-1 norm")
+mtext(outer = TRUE, side = 3, at = 0.18, "C = 0.5")
+mtext(outer = TRUE, side = 3, at = 0.52, "C = 1")
+mtext(outer = TRUE, side = 3, at = 0.84, "C = 2")
+make_density("est_1", legend = TRUE, ylim = c(0,0.25))
+make_density("est_2", ylim = c(0,0.25))
+make_density("est_3", ylim = c(0,0.25))
+dev.off()
+# local post-processing#
+  setwd("~/Dropbox/R/drinf/sandbox/results")#
+  incomp <- get(load("allOut_incomp.RData"))#
+  comp <- get(load("noboot_allOut_nocv_newest.RData"))#
+  incomp$max_sqrt_n_se <- with(incomp, (max_sqrt_n_ciu - max_sqrt_n_cil)/(2*1.96))#
+  incomp$ltmle_se <- with(incomp, (ltmle_ciu - ltmle_cil)/(2*1.96))#
+  comp$max_sqrt_n_se <- with(comp, (max_sqrt_n_ciu - max_sqrt_n_cil)/(2*1.96))#
+  comp$ltmle_se <- with(comp, (ltmle_ciu - ltmle_cil)/(2*1.96))#
+  comp$max_sqrt_n <- comp$max_sqrt_n_est#
+  incomp$max_sqrt_n <- incomp$max_sqrt_n_est#
+#
+  getRootNBias <- function(out, n, Q, g, est = c("max_sqrt_n_est",#
+                                                   "norm_sqrt_n_est",#
+                                                   paste0("drtmle_maxIter",1:5),#
+                                                   "ltmle")){#
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]#
+      rootn_bias <- by(rslt, rslt$n, function(x){#
+        o <- matrix(c(sum(!is.na(x$truth)), rep(NA, length(est))), nrow = 1)#
+        ct <- 1#
+        for(e in est){#
+          # browser()#
+          ct <- ct + 1#
+          o[ct] <- sqrt(x$n[1])*mean(x[,e] - x$truth, na.rm = TRUE)#
+        }#
+        colnames(o) <- c("nsim", est)#
+        o#
+      })#
+      ou <- Reduce(rbind, rootn_bias)#
+      ou <- cbind(unique(rslt$n), ou)#
+      colnames(ou)[1] <- "n"#
+      ou#
+  }#
+#
+  getCov <- function(out, n, Q, g,est = c("max_sqrt_n",#
+                                             "norm_sqrt_n",#
+                                             paste0("drtmle_maxIter",1:5),#
+                                             "ltmle")){#
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]#
+      cov <- by(rslt, rslt$n, function(x){#
+        o <- matrix(c(sum(!is.na(x$truth)), rep(NA, 2*length(est) + 1)), nrow = 1)#
+        ct <- 1#
+        for(e in est){#
+          # browser()#
+          ct <- ct + 1#
+          cov_avail <- any(grepl(paste0(e,"_cov"), colnames(rslt)))#
+          if(cov_avail){#
+            o[,ct] <- mean(x[,paste0(e,"_cov")], na.rm = TRUE)#
+            o[,ct+length(est)+1] <- median(x[,paste0(e,"_ciu")] - x[,paste0(e,"_cil")], na.rm = TRUE)#
+          }else{#
+            this_est <- x[,paste0(e)]#
+            this_se <- x[,paste0("se_",e)]#
+            cil <- this_est - 1.96*this_se; ciu <- this_est + 1.96*this_se#
+            width <- ciu - cil#
+              o[,ct] <- mean(cil < x$truth[!is.na(x$truth)][1] & ciu > x$truth[!is.na(x$truth)][1], na.rm = TRUE)#
+            o[,ct+length(est)+1] <- median(width, na.rm = TRUE)#
+          }#
+        }#
+        # add in ltmle with mc standard deviation interval#
+        sd_ltmle <- sd(x$ltmle, na.rm = TRUE)#
+        cil <- x$ltmle - 1.96 * sd_ltmle#
+        ciu <- x$ltmle + 1.96 * sd_ltmle#
+        o[,ct + 1] <- mean(cil < x$truth[!is.na(x$truth)][1] & ciu > x$truth[!is.na(x$truth)][1], na.rm = TRUE)#
+#
+        colnames(o) <- c("nsim", est, "ltmle_mc",paste0("width_",est))#
+        o#
+      })#
+      ou <- Reduce(rbind, cov)#
+      ou <- cbind(unique(rslt$n), ou)#
+      colnames(ou)[1] <- "n"#
+      ou#
+    }#
+    comp_Qrgw <- getRootNBias(comp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",#
+                 est = c("max_sqrt_n_est","ltmle"))#
+    incomp_Qrgw <- getRootNBias(incomp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",#
+                 est = c("max_sqrt_n_est"))#
+    Qrgw_bias <- cbind(comp_Qrgw, incomp_Qrgw[,3])#
+    comp_Qwgr <- getRootNBias(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",#
+                 est = c("max_sqrt_n_est","ltmle"))#
+    incomp_Qwgr <- getRootNBias(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",#
+                 est = c("max_sqrt_n_est"))#
+    Qwgr_bias <- cbind(comp_Qwgr, incomp_Qwgr[,3])#
+    comp_Qrgr <- getRootNBias(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",#
+                 est = c("max_sqrt_n_est","ltmle"))#
+    incomp_Qrgr <- getRootNBias(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",#
+                 est = c("max_sqrt_n_est"))#
+    Qrgr_bias <- cbind(comp_Qrgr, incomp_Qrgr[,3])#
+#
+    comp_Qrgw <- getCov(comp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",#
+                 est = c("max_sqrt_n","ltmle"))#
+    incomp_Qrgw <- getCov(incomp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",#
+                 est = c("max_sqrt_n"))#
+    Qrgw_cov <- cbind(comp_Qrgw, incomp_Qrgw[,3:5])#
+    comp_Qwgr <- getCov(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",#
+                 est = c("max_sqrt_n","ltmle"))#
+    incomp_Qwgr <- getCov(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",#
+                 est = c("max_sqrt_n"))#
+    Qwgr_cov <- cbind(comp_Qwgr, incomp_Qwgr[,3:5])#
+    comp_Qrgr <- getCov(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",#
+                 est = c("max_sqrt_n","ltmle"))#
+    incomp_Qrgr <- getCov(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",#
+                 est = c("max_sqrt_n"))#
+    Qrgr_cov <- cbind(comp_Qrgr, incomp_Qrgr[,3:5])#
+#
+    layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.5, 1.5),#
+           bty = "n", ylab = "Median confidence interval width (vs. LTMLE)",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i]/this_cov[,7], x = c(500, 1000, 5000, 7000), pch = grbg[ct], type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","=",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression("Q = "*Q[0]*" , "*g != g[0]), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression("Q = "*Q[0]*" , g = "*g[0]), at = 0.2)#
+      }#
+    }
+getCov <- function(out, n, Q, g,est = c("max_sqrt_n",#
+                                             "norm_sqrt_n",#
+                                             paste0("drtmle_maxIter",1:5),#
+                                             "ltmle")){#
+      rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]#
+      cov <- by(rslt, rslt$n, function(x){#
+        o <- matrix(c(sum(!is.na(x$truth)), rep(NA, 2*length(est) + 1)), nrow = 1)#
+        ct <- 1#
+        for(e in est){#
+          # browser()#
+          ct <- ct + 1#
+          cov_avail <- any(grepl(paste0(e,"_cov"), colnames(rslt)))#
+          if(cov_avail){#
+            o[,ct] <- mean(x[,paste0(e,"_cov")], na.rm = TRUE)#
+            o[,ct+length(est)+1] <- median(x[,paste0(e,"_ciu")] - x[,paste0(e,"_cil")], na.rm = TRUE)#
+          }else{#
+            this_est <- x[,paste0(e)]#
+            this_se <- x[,paste0("se_",e)]#
+            cil <- this_est - 1.96*this_se; ciu <- this_est + 1.96*this_se#
+            width <- ciu - cil#
+              o[,ct] <- mean(cil < x$truth[!is.na(x$truth)][1] & ciu > x$truth[!is.na(x$truth)][1], na.rm = TRUE)#
+            o[,ct+length(est)+1] <- median(width, na.rm = TRUE)#
+          }#
+        }#
+        # add in ltmle with mc standard deviation interval#
+        sd_ltmle <- sd(x$ltmle, na.rm = TRUE)#
+        cil <- x$ltmle - 1.96 * sd_ltmle#
+        ciu <- x$ltmle + 1.96 * sd_ltmle#
+        o[,ct + 1] <- mean(cil < x$truth[!is.na(x$truth)][1] & ciu > x$truth[!is.na(x$truth)][1], na.rm = TRUE)#
+#
+        colnames(o) <- c("nsim", est, "ltmle_mc",paste0("width_",est))#
+        o#
+      })#
+      ou <- Reduce(rbind, cov)#
+      ou <- cbind(unique(rslt$n), ou)#
+      colnames(ou)[1] <- "n"#
+      ou#
+    }#
+    comp_Qrgw <- getRootNBias(comp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",#
+                 est = c("max_sqrt_n_est","ltmle"))#
+    incomp_Qrgw <- getRootNBias(incomp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",#
+                 est = c("max_sqrt_n_est"))#
+    Qrgw_bias <- cbind(comp_Qrgw, incomp_Qrgw[,3])#
+    comp_Qwgr <- getRootNBias(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",#
+                 est = c("max_sqrt_n_est","ltmle"))#
+    incomp_Qwgr <- getRootNBias(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",#
+                 est = c("max_sqrt_n_est"))#
+    Qwgr_bias <- cbind(comp_Qwgr, incomp_Qwgr[,3])#
+    comp_Qrgr <- getRootNBias(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",#
+                 est = c("max_sqrt_n_est","ltmle"))#
+    incomp_Qrgr <- getRootNBias(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",#
+                 est = c("max_sqrt_n_est"))#
+    Qrgr_bias <- cbind(comp_Qrgr, incomp_Qrgr[,3])#
+#
+    comp_Qrgw <- getCov(comp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",#
+                 est = c("max_sqrt_n","ltmle"))#
+    incomp_Qrgw <- getCov(incomp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",#
+                 est = c("max_sqrt_n"))#
+    Qrgw_cov <- cbind(comp_Qrgw, incomp_Qrgw[,3:5])#
+    comp_Qwgr <- getCov(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",#
+                 est = c("max_sqrt_n","ltmle"))#
+    incomp_Qwgr <- getCov(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",#
+                 est = c("max_sqrt_n"))#
+    Qwgr_cov <- cbind(comp_Qwgr, incomp_Qwgr[,3:5])#
+    comp_Qrgr <- getCov(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",#
+                 est = c("max_sqrt_n","ltmle"))#
+    incomp_Qrgr <- getCov(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",#
+                 est = c("max_sqrt_n"))#
+    Qrgr_cov <- cbind(comp_Qrgr, incomp_Qrgr[,3:5])#
+#
+    layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.5, 1.5),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = grbg[ct], type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","=",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression("Q = "*Q[0]*" , "*g != g[0]), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression("Q = "*Q[0]*" , g = "*g[0]), at = 0.2)#
+      }#
+    }
+layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = grbg[ct], type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","=",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression("Q = "*Q[0]*" , "*g != g[0]), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression("Q = "*Q[0]*" , g = "*g[0]), at = 0.2)#
+      }#
+    }
+layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","=",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression("Q = "*Q[0]*" , "*g != g[0]), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression("Q = "*Q[0]*" , g = "*g[0]), at = 0.2)#
+      }#
+    }
+this_cov
+layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","=",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" = *Q[0]*" , g"^"*"*!= g[0]), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" = Q[0]*" , g"^"*","=",g[0])), at = 0.2)#
+      }#
+    }
+layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","=",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*"*!= g[0]), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*","=",g[0])), at = 0.2)#
+      }#
+    }
+layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","=",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*",!= g[0]), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*","=",g[0])), at = 0.2)#
+      }#
+    }
+layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","=",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*"*!= g[0]), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*","=",g[0])), at = 0.2)#
+      }#
+    }
+layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","=",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*"*!= g[0]), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*","=",g[0])), at = 0.2)#
+      }#
+    }
+mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*" != g[0]), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*","=",g[0])), at = 0.2)#
+      }
+mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*" != g[0]), at = 0.5)
+)
+layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","=",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*" != g[0])), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*","=",g[0])), at = 0.2)#
+      }#
+    }
+layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","= ",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*" != g[0])), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","=", Q[0]*" , g"^"*","= ",g[0])), at = 0.2)#
+      }#
+    }
+comp_Qrgw <- getRootNBias(comp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",#
+                 est = c("max_sqrt_n_est","ltmle"))#
+    incomp_Qrgw <- getRootNBias(incomp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",#
+                 est = c("max_sqrt_n_est"))#
+    Qrgw_bias <- cbind(comp_Qrgw, incomp_Qrgw[,3])#
+    comp_Qwgr <- getRootNBias(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",#
+                 est = c("max_sqrt_n_est","ltmle"))#
+    incomp_Qwgr <- getRootNBias(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",#
+                 est = c("max_sqrt_n_est"))#
+    Qwgr_bias <- cbind(comp_Qwgr, incomp_Qwgr[,3])#
+    comp_Qrgr <- getRootNBias(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",#
+                 est = c("max_sqrt_n_est","ltmle"))#
+    incomp_Qrgr <- getRootNBias(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",#
+                 est = c("max_sqrt_n_est"))#
+    Qrgr_bias <- cbind(comp_Qrgr, incomp_Qrgr[,3])#
+#
+    comp_Qrgw <- getCov(comp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",#
+                 est = c("max_sqrt_n","ltmle"))#
+    incomp_Qrgw <- getCov(incomp, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.glm",#
+                 est = c("max_sqrt_n"))#
+    Qrgw_cov <- cbind(comp_Qrgw, incomp_Qrgw[,3:5])#
+    comp_Qwgr <- getCov(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",#
+                 est = c("max_sqrt_n","ltmle"))#
+    incomp_Qwgr <- getCov(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.glm",#
+                 est = c("max_sqrt_n"))#
+    Qwgr_cov <- cbind(comp_Qwgr, incomp_Qwgr[,3:5])#
+    comp_Qrgr <- getCov(comp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",#
+                 est = c("max_sqrt_n","ltmle"))#
+    incomp_Qrgr <- getCov(incomp, n = c(500,1000,5000,7000), g = "SL.hal9001", Q = "SL.hal9001",#
+                 est = c("max_sqrt_n"))#
+    Qrgr_cov <- cbind(comp_Qrgr, incomp_Qrgr[,3:5])#
+#
+    layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","= ",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","= ", Q[0]*" , g"^"*" != g[0])), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","= ", Q[0]*" , g"^"*","= ",g[0])), at = 0.2)#
+      }#
+    }
+pdf("~/Dropbox/Dissertation/Double-robust inference in longitudinal settings/manuscript/simulation_results.pdf",#
+        width = 10, height = 8)#
+    layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","= ",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","= ", Q[0]*" , g"^"*" != g[0])), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","= ", Q[0]*" , g"^"*","= ",g[0])), at = 0.2)#
+      }#
+    }#
+    dev.off()
+pdf("~/Dropbox/Dissertation/Double-robust inference in longitudinal settings/manuscript/simulation_results.pdf",#
+        width = 10*0.85, height = 8*0.85)
+layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.5), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","= ",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","= ", Q[0]*" , g"^"*" != g[0])), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","= ", Q[0]*" , g"^"*","= ",g[0])), at = 0.2)#
+      }#
+    }#
+    dev.off()
+pdf("~/Dropbox/Dissertation/Double-robust inference in longitudinal settings/manuscript/simulation_results.pdf",#
+        width = 10*0.85, height = 8*0.85)#
+    layout(matrix(1:9, nrow = 3, byrow = TRUE))#
+    par(mar = c(4.1, 4.1, 0.5, 0.6), mgp = c(2.1, 0.5, 0),#
+        oma = c(0,2.1,0,0))#
+    for(d in c("Qwgr","Qrgw","Qrgr")){#
+      this_bias <- eval(parse(text = paste0(d,"_bias")))#
+      this_cov <- eval(parse(text = paste0(d,"_cov")))#
+      # root-n bias Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(-10,10),#
+           bty = "n", ylab = expression(n^{1/2} %*% "bias" ), xlab = "n")#
+      ct <- 0#
+      for(i in (1:(ncol(this_bias)-2) + 2)){#
+        ct <- ct + 1#
+        points(y = this_bias[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = 'b')#
+      }#
+      abline(h = 0, lty = 3)#
+      if(d == "Qwgr"){#
+        legend(x = "topleft", bty = "n", pch = c(1,3,2), #
+               legend = c("DR-LTMLE-1","DR-LTMLE-2","LTMLE"))#
+      }#
+      # coverage Q right g wrong#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0.4, 1),#
+           bty = "n", ylab = "Coverage probability", xlab = "n")#
+      ct <- 0 #
+      for(i in c(3,4,8)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 0.95, lty = 3)#
+      # add in ltmle mc intervals#
+      if(d == "Qwgr"){#
+        points(y = this_cov[,5], x = c(500,1000,5000,7000), pch = 17, type = "b")#
+        legend(x = "bottomleft", bty = "n", pch = c(17),#
+               legend = "LTMLE Monte Carlo SE")#
+      }#
+      # ci width#
+      plot(1,0,pch = "", xlim = c(500,10000), log = "x", ylim = c(0, 1),#
+           bty = "n", ylab = "Median confidence interval width",#
+           xlab = "n")#
+      ct <- 0#
+      grbg <- c(1,3)#
+      for(i in c(6,7,10)){#
+        ct <- ct + 1#
+        points(y = this_cov[,i], x = c(500, 1000, 5000, 7000), pch = ct, type = "b")#
+      }#
+      abline(h = 1, lty = 3)#
+      if(d == "Qwgr"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*" != Q[0]*" , g"^"*","= ",g[0])), at = 0.85)      #
+      }else if( d== "Qrgw"){#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","= ", Q[0]*" , g"^"*" != g[0])), at = 0.5)      #
+      }else{#
+        mtext(side = 2, outer = TRUE, line = 0, expression(paste("Q"^"*","= ", Q[0]*" , g"^"*","= ",g[0])), at = 0.2)#
+      }#
+    }#
+    dev.off()
+install.packages("cubature")
+hcubature
+library(cubature)
+?cubature
+?hcubature
+testFn0 <- function(x) prod(cos(x))#
+testFn0_v <- function(x) matrix(apply(x, 2, function(z) prod(cos(z))), ncol = ncol(x))
+cubature::hcubature(f = fv,#
+                                           lowerLimit = c(-pi,-pi),#
+                                           upperLimit = c(pi, pi),#
+                                           tol = tol,#
+                                           vectorInterface = TRUE#
+                                           )
+cubature::hcubature(f = fv,#
+                                           lowerLimit = c(-pi,-pi),#
+                                           upperLimit = c(pi, pi),#
+                                           tol = 1e-3,#
+                                           vectorInterface = TRUE#
+                                           )
+cubature::hcubature(f = testFn0_v,#
+                                           lowerLimit = c(-pi,-pi),#
+                                           upperLimit = c(pi, pi),#
+                                           tol = 1e-3,#
+                                           vectorInterface = TRUE#
+                                           )
+cubature::hcubature(f = testFn0,#
+                                           lowerLimit = c(-pi,-pi),#
+                                           upperLimit = c(pi, pi),#
+                                           tol = 1e-3,#
+                                           vectorInterface = TRUE#
+                                           )
+cubature::hcubature(f = testFn0,#
+                                           lowerLimit = c(-pi,-pi),#
+                                           upperLimit = c(pi, pi),#
+                                           tol = 1e-3,#
+                                           vectorInterface = FALSE#
+                                           )
+adaptIntegrate(testFn0, lowerLimit = c(-pi,-pi), upperLimit = c(pi, pi))
+f <- function(x){
+y <- x[1]; z <- x[2]; sqrt(y^2 * cos(y*z)^2 + z^2 * cos(y*z)^2)
+}
+adaptIntegrate(f, lowerLimit = c(-pi,-pi), upperLimit = c(pi, pi))
+?adaptIntegrate
+adaptIntegrate(f, lowerLimit = c(-pi,-pi), upperLimit = c(pi, pi), tol = 1e-6)
+n <- 1000
+n <- 500
+W1 <- runif(n, -pi, pi)
+W2 <- runif(n, -pi, pi)
+g0 <- plogis(1 + W1 - W2)
+A <- rbinom(n, 1, g0)
+Q0 <- sin(W1 * W2)
+Y <- Q0 + rnorm(n, 0, 1)
+# # load packages
+library(hal9001)
+devtools::install_github("jeremyrcoyle/hal9001")
+library(hal9001)

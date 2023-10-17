@@ -7,7 +7,7 @@ set.seed(1234124)
 # dat <- makeData(n = 10000)
 
 # do.one <- function(){
-	dat <- makeData(n = 500)
+	dat <- makeData(n = 2000)
 
 	# faster to call mean.tmle
 	# debug(drinf.tmle)
@@ -15,20 +15,21 @@ set.seed(1234124)
 	L0 = dat$L0, L1 = dat$L1, L2 = dat$L2, A0 = dat$A0, A1 = dat$A1, 
 	abar = c(1,1), 
 	cvFolds = 1, 
-	SL.Q = "SL.glm.interaction",
+	SL.Q = "SL.glm",
 	SL.g = "SL.glm.interaction", 
 	SL.Qr = "SL.gam",
 	SL.gr = "SL.gam",
-	# universal = TRUE, 
-	# universalStepSize = 1e-5,
+	universal = TRUE, 
+	universalStepSize = 1e-8,
+	tolIF = 1/length(dat$L0[,1]),
 	flucOrd = c("targetg0","targetg1","redReg",
 	           "targetQ2","targetQ1", "redReg"),
-	return.models = FALSE,
+	return.models = TRUE,
 	verbose = FALSE,
 	maxIter = 20,
 	return.ltmle = TRUE,
 	allatonce = FALSE,
-	tolg = 5e-2,
+	tolg = 1e-2,
 	tolQ = 1e-2, stratify = TRUE
 	)
 	# object$est_trace

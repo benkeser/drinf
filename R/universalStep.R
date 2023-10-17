@@ -46,10 +46,10 @@ universalStep <- function(
 	)
 
 	# take a step for Q2n 
-	Q2nEps <- (L2.max - L2.min)*plogis(SuperLearner::trimLogit(Q2ns) + dx*(HQ2%*%PnDQ2)/normPnD) + L2.min
-	Q1nEps <- (L2.max - L2.min)*plogis(SuperLearner::trimLogit(Q1ns) + dx*(HQ1%*%PnDQ1)/normPnD) + L2.min
-	g0nEps <- (1 - 2*tolg)*plogis(SuperLearner::trimLogit(gn$g0n) + dx*(Hg0%*%PnDg0)/normPnD) + tolg 
-	g1nEps <- (1 - 2*tolg)*plogis(SuperLearner::trimLogit(gn$g1n) + dx*(Hg1%*%PnDg1)/normPnD) + tolg
+	Q2nEps <- (L2.max - L2.min)*plogis(SuperLearner::trimLogit(Q2ns, .Machine$double.neg.eps) + dx*(HQ2%*%PnDQ2)/normPnD) + L2.min
+	Q1nEps <- (L2.max - L2.min)*plogis(SuperLearner::trimLogit(Q1ns, .Machine$double.neg.eps) + dx*(HQ1%*%PnDQ1)/normPnD) + L2.min
+	g0nEps <- (1 - 2*tolg)*plogis(SuperLearner::trimLogit(gn$g0n, .Machine$double.neg.eps) + dx*(Hg0%*%PnDg0)/normPnD) + tolg 
+	g1nEps <- (1 - 2*tolg)*plogis(SuperLearner::trimLogit(gn$g1n, .Machine$double.neg.eps) + dx*(Hg1%*%PnDg1)/normPnD) + tolg
 	# g0nEps[g0nEps < tolg] <- tolg
 	# g0nEps[g0nEps > 1-tolg] <- 1-tolg
 	# g1nEps[g1nEps < tolg] <- tolg

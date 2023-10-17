@@ -419,12 +419,17 @@ drinf.tmle <- function(L0, L1, L2,
 
         # initialize list that will hold the current step of the fluctuated nuisance parameters 
         # by setting equal to the initial values
+        if(cvFolds > 1){
+          stop("universal cvtmle not supported yet")
+        }
         QnEps <- vector(mode = "list")
         gnEps <- vector(mode = "list")
-        QnEps$Q2n <- Qn$Q2n
-        QnEps$Q1n <- Qn$Q1n
-        gnEps$g1n <- gn$g1n
-        gnEps$g0n <- gn$g0n
+        QnEps$Q2n <- Reduce(c, lapply(Qn_list, "[[", "Q2n"))
+        QnEps$Q1n <- Reduce(c, lapply(Qn_list, "[[", "Q1n"))
+        gnEps$g1n <- Reduce(c, lapply(gn_list, "[[", "g1n"))
+        gnEps$g0n <- Reduce(c, lapply(gn_list, "[[", "g0n"))
+        Qnr.gnr <- Qnr.gnr_list[[1]]
+        est.naive <- mean(QnEps$Q1n)
 
         #-------------------------
         # evaluate IF
@@ -451,6 +456,12 @@ drinf.tmle <- function(L0, L1, L2,
                      abar = abar, tolg = tolg)
         risk <- all.risks$sum
         badSteps <- 0
+        # determine direction
+        mult <- determine_direction(L2 = L2, A0 = A0, A1 = A1, 
+                QnEps = QnEps, gnEps = gnEps, Qnr.gnr = Qnr.gnr, 
+                PnDQ2 = PnDQ2, PnDQ1 = PnDQ1, PnDg0 = PnDg0, PnDg1 = PnDg1,
+                normPnD = normPnD, tolg = tolg, tolQ = tolQ, 
+                universalStepSize = universalStepSize, abar = abar)
         # start taking steps
         while(normPnD > tolIF){
             iter <- iter + 1
@@ -460,7 +471,7 @@ drinf.tmle <- function(L0, L1, L2,
             stepOut <- universalStep(
                 L2 = L2, Qn = QnEps, gn = gnEps, Qnr.gnr = Qnr.gnr, 
                 PnDQ2 = PnDQ2, PnDQ1 = PnDQ1, PnDg0 = PnDg0, PnDg1 = PnDg1,
-                normPnD = normPnD, dx = universalStepSize, tolg = tolg, tolQ = tolQ 
+                normPnD = normPnD, dx = mult * universalStepSize, tolg = tolg, tolQ = tolQ 
             )
             QnEps <- list(Q2n = stepOut$Q2n, Q1n = stepOut$Q1n)
             gnEps <- list(g1n = stepOut$g1n, g0n = stepOut$g0n)
@@ -468,9 +479,10 @@ drinf.tmle <- function(L0, L1, L2,
             #----------------------------
             # update reduced regressions
             #----------------------------
-            Qnr.gnr <- redReg(A0 = A0, A1 = A1, L2 = L2, abar = abar, 
+            Qnr.gnr <- redReg(A0 = A0, A1 = A1, L2 = L2, abar = abar, folds = folds, 
                               gn = gnEps, Qn = QnEps, verbose = verbose, tolg = tolg, 
-                              SL.Qr = SL.Qr, SL.gr = SL.gr, return.models = return.models)
+                              SL.Qr = SL.Qr, SL.gr = SL.gr, return.models = return.models,
+                              update = TRUE, Qnr.gnr = Qnr.gnr)
 
             #-------------------------
             # evaluate IF
@@ -521,8 +533,11 @@ drinf.tmle <- function(L0, L1, L2,
     # evaluate parameter and compute std err
     #------------------------------------------
     # evaluate parameter
-    psin <- mean(full_Qnstar$Q1n)
-       
+    if(!universal){
+      psin <- mean(full_Qnstar$Q1n)
+    }else{
+      psin <- mean(Qnstar$Q1n)
+    }
     # compute standard errors
     se <- sqrt(var(
             (if.dr$Dstar0 + if.dr$Dstar1 + if.dr$Dstar2 -
@@ -607,15 +622,21 @@ drinf.tmle <- function(L0, L1, L2,
     out$se <- as.numeric(se)
 
     # replace NA's in psin_trace
-    n_notNA_psin_trace <- sum(!is.na(psin_trace))
-    if(n_notNA_psin_trace < length(psin_trace)){
-        psin_trace[(n_notNA_psin_trace+1):length(psin_trace)] <- psin_trace[n_notNA_psin_trace]
-        se_trace[(n_notNA_psin_trace+1):length(psin_trace)] <- se_trace[n_notNA_psin_trace]
+    if(!universal){
+      n_notNA_psin_trace <- sum(!is.na(psin_trace))
+      if(n_notNA_psin_trace < length(psin_trace)){
+          psin_trace[(n_notNA_psin_trace+1):length(psin_trace)] <- psin_trace[n_notNA_psin_trace]
+          se_trace[(n_notNA_psin_trace+1):length(psin_trace)] <- se_trace[n_notNA_psin_trace]
+      }
     }
 
-    out$est_trace <- psin_trace
-    out$se_trace <- se_trace
-
+    if(!universal){
+      out$est_trace <- psin_trace
+      out$se_trace <- se_trace
+    }else{
+      out$est_trace <- NA
+      out$se_trace <- NA
+    }
     # naive output
     out$est.naive <- NULL
     if(return.ltmle){
@@ -624,10 +645,12 @@ drinf.tmle <- function(L0, L1, L2,
     
     # number of iterations
     out$iter <- iter
-    out$sqrt_n_max_iter <- sqrt_n_max_iter
-    out$n_max_iter <- n_max_iter
-    out$sqrt_n_norm_iter <- sqrt_n_norm_iter
-    out$n_norm_iter <- n_norm_iter
+    if(!universal){
+      out$sqrt_n_max_iter <- sqrt_n_max_iter
+      out$n_max_iter <- n_max_iter
+      out$sqrt_n_norm_iter <- sqrt_n_norm_iter
+      out$n_norm_iter <- n_norm_iter
+    }
 
     if(universal) out$badSteps <- badSteps
     # model output
@@ -643,10 +666,10 @@ drinf.tmle <- function(L0, L1, L2,
 
     # setting up models for return
     if(return.models){
-        out$Qmod$Q2n <- Qn$Q2nmod
-        out$Qmod$Q1n <- Qn$Q1nmod
-        out$gmod$g0n <- gn$g0nmod
-        out$gmod$g1n <- gn$g1nmod
+        out$Qmod$Q2n <- Qn_list[[1]]$Q2nmod
+        out$Qmod$Q1n <- Qn_list[[1]]$Q1nmod
+        out$gmod$g0n <- gn_list[[1]]$g0nmod
+        out$gmod$g1n <- gn_list[[1]]$g1nmod
         out$Qrmod$Q2nr <- Qnr.gnr$Q2nrmod
         out$Qrmod$Q1nr <- Qnr.gnr$Q1nrmod
         out$grmod$g1nr <- Qnr.gnr$g1nrmod
@@ -656,7 +679,7 @@ drinf.tmle <- function(L0, L1, L2,
         out$grmod$hbarnr <- Qnr.gnr$hbarnrmod
         # out$flucmod <- etastar$flucmod
         if(return.ltmle){
-            out$flucmod.ltmle <- etastar.ltmle$flucmod
+            # out$flucmod.ltmle <- etastar.ltmle$flucmod
         }
     }
     }

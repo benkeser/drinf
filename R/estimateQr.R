@@ -157,7 +157,7 @@ estimateQr <- function(
                 Q1nr2 = Q1nr2, Q2rmod = NULL, Q1r1mod = NULL, Q1r2mod = NULL)
     
     if(return.models){
-        Q2rmod$call <- Q1rmod$call <- NULL
+        Q2rmod$call <- Q1r1mod$call <- Q1r2mod$call <- NULL
         out$Q2rmod <- Q2rmod
         out$Q1r1mod <- Q1r1mod
         out$Q1r2mod <- Q1r2mod

@@ -43,18 +43,18 @@ redo_parm$g <- as.character(redo_parm$g)
 parm <- redo_parm[redo_parm$seed <= 500, ]
 
 # only do first 100
-parm <- parm[1:198,]
+# parm <- parm[1:150,]
 
 # parm <- parm[1,,drop=FALSE]
 # source in simulation Functions
 source("~/drinf/makeData.R")
 # load drinf
-library(hal9001, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.2/")
-
-library(drinf, lib.loc = "/home/dbenkese/R/x86_64-pc-linux-gnu-library/3.4")
+library(drinf, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.2/")
 library(gam, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.2/")
+library(hal9001, lib.loc = "/home/dbenkese/R/x86_64-unknown-linux-gnu-library/3.2/")
 library(SuperLearner)
 library(methods)
+
 
 
 # get the list size #########
@@ -221,6 +221,7 @@ if (args[1] == 'run') {
 
 # merge job ###########################
 if (args[1] == 'merge') {   
+  print("all done")
   ns <- c(500,1000,5000,7000)
   bigB <- 500
   g <- c("SL.hal9001","SL.glm")
@@ -281,7 +282,7 @@ if (args[1] == 'merge') {
     out[,(1:ncol(out))[c(-4,-5)]] <- apply(out[,(1:ncol(out))[c(-4,-5)]], 2, as.numeric)
     save(out, file=paste0('~/drinf/out/noboot_allOut_nocv_newest.RData'))
 
-    # # post processing
+  #   # # post processing
     # getBias <- function(out, n, Q, g){
     #   rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
     #   bias <- by(rslt, rslt$n, function(x){
@@ -364,17 +365,17 @@ if (args[1] == 'merge') {
     getCov(out, n = c(500,1000,5000,7000), Q = "SL.hal9001", g = "SL.hal9001")
     getCov(out, n = c(500,1000,5000,7000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
 
-    # getIC <- function(out, n, Q, g){
-    #   rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
-    #   ic <-  by(rslt, rslt$n, function(x){
-    #     colMeans(x[ , grepl("IC", colnames(x))])
-    #   })
-    #   ic
-    # }
-    # getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
-    # getIC(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
-    # getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
-    # getIC(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
+  #   # getIC <- function(out, n, Q, g){
+  #   #   rslt <- out[out$n %in% n & out$Q %in% Q & out$g %in% g, ]
+  #   #   ic <-  by(rslt, rslt$n, function(x){
+  #   #     colMeans(x[ , grepl("IC", colnames(x))])
+  #   #   })
+  #   #   ic
+  #   # }
+  #   # getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.glm")
+  #   # getIC(out, n = c(500,1000,5000), g = "SL.hal9001", Q = "SL.glm")
+  #   # getIC(out, n = c(500,1000,5000), Q = "SL.hal9001", g = "SL.hal9001")
+  #   # getIC(out, n = c(500,1000,5000), Q = "SL.glm.interaction", g = "SL.glm.interaction")
 
 
 }

@@ -30,7 +30,11 @@ evaluateRisk <- function(
     g1ns[g1ns == 0] <- .Machine$double.neg.eps
     g1ns[g1ns == 1] <- 1 - .Machine$double.neg.eps
     g0ns[g0ns == 0] <- .Machine$double.neg.eps
-    g0ns[g0ns == 1] <- 1 - .Machine$double.neg.eps
+    g0ns[g0ns == 1] <- 1 - .Machine$double.neg.eps    
+    Q2ns[Q2ns == 0] <- .Machine$double.neg.eps
+    Q2ns[Q2ns == 1] <- 1 - .Machine$double.neg.eps
+    Q1ns[Q1ns == 0] <- .Machine$double.neg.eps
+    Q1ns[Q1ns == 1] <- 1 - .Machine$double.neg.eps
 
     # Loss for Q2
     LQ2 <- mean(as.numeric(A0==abar[1] & A1==abar[2])*

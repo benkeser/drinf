@@ -1,8 +1,8 @@
 #!/bin/bash
 
-ANALYSIS='run_7'      # change for every analysis you run (2nd arg)
+ANALYSIS='run_all_w_depends_4'      # change for every analysis you run (2nd arg)
 MAILDOM='@fhcrc.org'   # your email domain (for receiving error messages)
-MAXARRAYSIZE=1000          # set to 0 if you are not using slurm job arrays
+MAXARRAYSIZE=150          # set to 0 if you are not using slurm job arrays
 MYSCRATCH="./scratch"  # location of your persistent scratch dir
 PARTITION='campus'        # the queue on your cluster that allows short jobs
 RESULTDIR="./out"  # This is a folder in permanent storage
@@ -33,11 +33,10 @@ export STEPSIZE            # variables
 echo "  using $SCRIPT with args $@..."
 
 # run the part below if $RETRYFAILED environment var is not set or ""
-if [[ -z $RETRYFAILED ]]; then 
-
+# if [[ -z $RETRYFAILED ]]; then 
     # Preparing input data serially, pass 'prepare' parameter to SCRIPT,
     echo "  submitting ${SCRIPT} prepare in ${MYSCRATCH}..." 
-    sbatch --dependency=singleton --job-name=${ANALYSIS} \
+    sbatch --dependency=singleton --job-name=prep \
            --partition=${PARTITION} --time=0-3 --requeue \
            --mail-type=FAIL --mail-user="${username}{MAILDOM}" \
            --output="${MYSCRATCH}/out/${ANALYSIS}.prepare.%J" \
@@ -52,62 +51,65 @@ if [[ -z $RETRYFAILED ]]; then
     numjobs=$((${listsize}/${MAXARRAYSIZE}+1))
     arrid=0
     arrupper=$MAXARRAYSIZE
-    for i in $(seq 1 $numjobs); do
-        if [[ $i -eq $numjobs ]]; then
-            # set last arraysize to remainder 
-            arrupper=$((${listsize}-${arrid}))
-        fi
-        echo "  submitting ${SCRIPT} run in ${MYSCRATCH} with "
-        echo "    STEPSIZE ${STEPSIZE}, arrid ${arrid} depends on job ${waitforjobs}..."
-        sbatch --job-name=${ANALYSIS} \
-               --array=1-${arrupper}:${STEPSIZE} --partition=${PARTITION} \
-               --mail-type=FAIL --mail-user="${username}${MAILDOM}" --time=0-1 \
-               --output="${MYSCRATCH}/out/${ANALYSIS}.run.${arrid}_%a_%A.%J" \
-               --wrap="${SCRIPT} run ${arrid} $3 $4 $5 $6 $7 $8 $9" --requeue
-        arrid=$((${arrid}+${MAXARRAYSIZE}))
+    njobs=150
+    for j in $(seq 1 $numjobs); do
+      if [[ $j -eq $numjobs ]]; then
+        # set last arraysize to remainder 
+        arrupper=$((${listsize}-${arrid}))
+      fi
+      thisjob=run_$j
+      echo "  submitting ${SCRIPT} run in ${MYSCRATCH} with "
+      echo "    STEPSIZE ${STEPSIZE}, arrid ${arrid} depends on job ${waitforjobs}..."
+      sbatch --dependency=afterok:${waitforjobs} --job-name=${thisjob} \
+             --array=1-${arrupper}:${STEPSIZE} --partition=${PARTITION} \
+             --mail-type=FAIL --mail-user="${username}${MAILDOM}" --time=0-24 \
+             --output="${MYSCRATCH}/out/${ANALYSIS}.run.${arrid}_%a_%A.%J" \
+             --wrap="${SCRIPT} run ${arrid} $3 $4 $5 $6 $7 $8 $9" --requeue
+      arrid=$((${arrid}+${MAXARRAYSIZE}))
+      # Merge results serially, pass 2 parameters to SCRIPT, 2nd is optional (5h)
+      echo "  submitting ${SCRIPT} merge ${listsize}..."
+      sbatch --dependency=singleton --job-name=${thisjob} \
+           --partition=${PARTITION} --requeue --time=0-5 \
+           --mail-type=END,FAIL --mail-user="${username}${MAILDOM}" \
+           --output="${MYSCRATCH}/out/${ANALYSIS}.merge.%J" \
+           --wrap="${SCRIPT} merge ${listsize} $3 $4 $5 $6 $7 $8 $9"
+
+      wj=$(squeue -o "%A" -h -u ${username} -n ${thisjob} -S i | tr "\n" ":")
+      waitforjobs=${wj%?} #remove the last character (:) from string
     done
 
-    thisscript=$0
-    if ! [[ "$0" = /* ]]; then
-        thisscript=$(pwd)/$0
-    fi
-    # submit control job that waits for parallel jobs to finish and then re-submits failed jobs (4h)
-    echo "  submitting control job with args '$@' "
-    echo "    that waits and resubmits failed jobs..."
-    sbatch --dependency=singleton --job-name=${ANALYSIS} \
-           --partition=${PARTITION} --requeue --time=0-4 \
-           --mail-type=FAIL --mail-user="${username}${MAILDOM}" \
-           --output="${MYSCRATCH}/out/${ANALYSIS}.correct.%J" \
-           --wrap="RETRYFAILED=$numjobs ${thisscript} $1 $2 $3 $4 $5 $6 $7 $8 $9"
+    # thisscript=$0
+    # if ! [[ "$0" = /* ]]; then
+    #     thisscript=$(pwd)/$0
+    # fi
+    # # submit control job that waits for parallel jobs to finish and then re-submits failed jobs (4h)
+    # echo "  submitting control job with args '$@' "
+    # echo "    that waits and resubmits failed jobs..."
+    # sbatch --dependency=singleton --job-name=${ANALYSIS} \
+    #        --partition=${PARTITION} --requeue --time=0-4 \
+    #        --mail-type=FAIL --mail-user="${username}${MAILDOM}" \
+    #        --output="${MYSCRATCH}/out/${ANALYSIS}.correct.%J" \
+    #        --wrap="RETRYFAILED=$numjobs ${thisscript} $1 $2 $3 $4 $5 $6 $7 $8 $9"
 
-else
+# else
 # run the part below if $RETRYFAILED environment var IS SET by previous control job
 # the control job is needed because we cannot submit retry jobs right at the 
 # beginning as we do not yet know which jobs will fail.
 
     # re-run all failed jobs where the appropriate output file is missing  (2h)
     # --requeue works only for preempted jobs 
-    for i in $(seq 1 $RETRYFAILED); do
-        id=$((${i}*${STEPSIZE}-${STEPSIZE}+1))
-        if ! [[ -f "${MYSCRATCH}/run/${i}-run.dat" ]]; then
-            echo "  re-submitting ${SCRIPT} run ${id}"
-            sbatch --dependency=singleton --job-name=${ANALYSIS} \
-                   --partition=${PARTITION} --requeue --time=0-2 \
-                   --mail-type=FAIL --mail-user="${username}${MAILDOM}" \
-                   --output="${MYSCRATCH}/out/${ANALYSIS}.run2.${i}.%J" \
-                   --wrap="${SCRIPT} run ${id} $3 $4 $5 $6 $7 $8 $9"
-        fi
-    done
-
-    # Merge results serially, pass 2 parameters to SCRIPT, 2nd is optional (5h)
-    echo "  submitting ${SCRIPT} merge ${listsize}..."
-    sbatch --dependency=singleton --job-name=${ANALYSIS} \
-           --partition=${PARTITION} --requeue --time=0-5 \
-           --mail-type=END,FAIL --mail-user="${username}${MAILDOM}" \
-           --output="${MYSCRATCH}/out/${ANALYSIS}.merge.%J" \
-           --wrap="${SCRIPT} merge ${listsize} $3 $4 $5 $6 $7 $8 $9"
-
-fi
+    # for i in $(seq 1 $RETRYFAILED); do
+    #     id=$((${i}*${STEPSIZE}-${STEPSIZE}+1))
+    #     if ! [[ -f "${MYSCRATCH}/run/${i}-run.dat" ]]; then
+    #         echo "  re-submitting ${SCRIPT} run ${id}"
+    #         sbatch --dependency=singleton --job-name=${ANALYSIS} \
+    #                --partition=${PARTITION} --requeue --time=0-2 \
+    #                --mail-type=FAIL --mail-user="${username}${MAILDOM}" \
+    #                --output="${MYSCRATCH}/out/${ANALYSIS}.run2.${i}.%J" \
+    #                --wrap="${SCRIPT} run ${id} $3 $4 $5 $6 $7 $8 $9"
+    #     fi
+    # done
+# fi
 
 echo -e "  monitor output with this command:"
 echo -e "  tail -f ${MYSCRATCH}/out/${ANALYSIS}.*"
