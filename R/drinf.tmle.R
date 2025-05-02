@@ -663,7 +663,10 @@ drinf.tmle <- function(L0, L1, L2,
     out$ic <- list(orig = mean(if.dr$Dstar0 + if.dr$Dstar1 + if.dr$Dstar2),
                    missQ = mean(if.dr$Dg1.Q2 + if.dr$Dg0.Q1),
                    missg = mean(if.dr$DQ2.g1 + if.dr$DQ2.g0 + if.dr$DQ1.g0))
-
+    out$ic_full <- if.dr$Dstar0 + if.dr$Dstar1 + if.dr$Dstar2 - 
+            (if.dr$Dg1.Q2 + if.dr$Dg0.Q1) - 
+            (if.dr$DQ2.g1 + if.dr$DQ2.g0 + if.dr$DQ1.g0)
+            
     # setting up models for return
     if(return.models){
         out$Qmod$Q2n <- Qn_list[[1]]$Q2nmod
